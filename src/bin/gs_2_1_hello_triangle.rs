@@ -1,15 +1,39 @@
+#![allow(non_upper_case_globals)]
 extern crate glfw;
 use self::glfw::{ Context, Key, Action };
 
 extern crate gl;
+use self::gl::types::*;
 
 use std::sync::mpsc::Receiver;
+use std::ffi::CString;
+use std::ptr;
+use std::str;
 
 // settings
 const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
+const vertexShaderSource: &str = r#"
+    #version 330 core
+    layout (location = 0) in vec3 aPos;
+    void main()
+    {
+       gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    };
+"#;
+
+const fragmentShaderSource: &str = r#"
+    #version 330 core
+    out vec4 FragColor;
+    void main()
+    {
+       FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    };
+"#;
+
 #[allow(dead_code)]
+#[allow(non_snake_case)]
 fn main() {
     // glfw: initialize and configure
     // ------------------------------
@@ -31,6 +55,27 @@ fn main() {
     // gl: load all OpenGL function pointers
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+
+    // build and compile our shader program
+    // ------------------------------------
+    // vertex shader
+    unsafe {
+        let vertexShader = gl::CreateShader(gl::VERTEX_SHADER);
+        let c_str = CString::new(vertexShaderSource.as_bytes()).unwrap();
+        gl::ShaderSource(vertexShader, 1, &c_str.as_ptr(), ptr::null());
+        gl::CompileShader(vertexShader);
+
+        // check for shader compile errors
+        let mut success = gl::FALSE as GLint;
+        gl::GetShaderiv(vertexShader, gl::COMPILE_STATUS, &mut success);
+        if success != gl::TRUE as GLint {
+            let mut infoLog = Vec::with_capacity(512);
+            infoLog.set_len(512 - 1); // subtract 1 to skip the trailing null character
+            gl::GetShaderInfoLog(vertexShader, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
+            println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
+        }
+    }
+
 
     // render loop
     // -----------
