@@ -1,0 +1,8 @@
+[package]
+authors = ["Benjamin Wasty <benny.wasty@gmail.com>"]
+name = "learn-opengl-rs"
+version = "0.1.0"
+
+[dependencies]
+gl = "0.6.2"
+glfw = "0.14.0"
