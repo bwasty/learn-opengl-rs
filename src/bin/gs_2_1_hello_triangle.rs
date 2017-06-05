@@ -17,19 +17,17 @@ const SCR_HEIGHT: u32 = 600;
 const vertexShaderSource: &str = r#"
     #version 330 core
     layout (location = 0) in vec3 aPos;
-    void main()
-    {
+    void main() {
        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    };
+    }
 "#;
 
 const fragmentShaderSource: &str = r#"
     #version 330 core
     out vec4 FragColor;
-    void main()
-    {
+    void main() {
        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-    };
+    }
 "#;
 
 #[allow(dead_code)]
@@ -61,19 +59,46 @@ fn main() {
     // vertex shader
     unsafe {
         let vertexShader = gl::CreateShader(gl::VERTEX_SHADER);
-        let c_str = CString::new(vertexShaderSource.as_bytes()).unwrap();
-        gl::ShaderSource(vertexShader, 1, &c_str.as_ptr(), ptr::null());
+        let c_str_vert = CString::new(vertexShaderSource.as_bytes()).unwrap();
+        gl::ShaderSource(vertexShader, 1, &c_str_vert.as_ptr(), ptr::null());
         gl::CompileShader(vertexShader);
 
         // check for shader compile errors
         let mut success = gl::FALSE as GLint;
+        let mut infoLog = Vec::with_capacity(512);
         gl::GetShaderiv(vertexShader, gl::COMPILE_STATUS, &mut success);
         if success != gl::TRUE as GLint {
-            let mut infoLog = Vec::with_capacity(512);
             infoLog.set_len(512 - 1); // subtract 1 to skip the trailing null character
             gl::GetShaderInfoLog(vertexShader, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
             println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
         }
+
+        // fragment shader
+        let fragmentShader = gl::CreateShader(gl::FRAGMENT_SHADER);
+        let c_str_frag = CString::new(fragmentShaderSource.as_bytes()).unwrap();
+        gl::ShaderSource(fragmentShader, 1, &c_str_frag.as_ptr(), ptr::null());
+        gl::CompileShader(fragmentShader);
+        // check for shader compile errors
+        gl::GetShaderiv(fragmentShader, gl::COMPILE_STATUS, &mut success);
+        if success != gl::TRUE as GLint {
+            gl::GetShaderInfoLog(fragmentShader, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
+            println!("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
+        }
+
+        // link shaders
+        let shaderProgram = gl::CreateProgram();
+        gl::AttachShader(shaderProgram, vertexShader);
+        gl::AttachShader(shaderProgram, fragmentShader);
+        gl::LinkProgram(shaderProgram);
+        // check for linking errors
+        gl::GetProgramiv(shaderProgram, gl::LINK_STATUS, &mut success);
+        if success != gl::TRUE as GLint {
+            gl::GetProgramInfoLog(shaderProgram, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
+            println!("ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
+        }
+        gl::DeleteShader(vertexShader);
+        gl::DeleteShader(fragmentShader);
+
     }
 
 
