@@ -102,7 +102,8 @@ fn main() {
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
-        let vertices = [
+        // HINT: type annotation is crucial since default for float literals is f64
+        let vertices: [f32; 9] = [
             -0.5, -0.5, 0.0, // left
              0.5, -0.5, 0.0, // right
              0.0,  0.5, 0.0  // top
