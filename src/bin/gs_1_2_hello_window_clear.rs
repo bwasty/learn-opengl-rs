@@ -1,5 +1,5 @@
 extern crate glfw;
-use self::glfw::{ Context, Key, Action };
+use self::glfw::{Context, Key, Action};
 
 extern crate gl;
 
@@ -21,7 +21,10 @@ fn main() {
 
     // glfw window creation
     // --------------------
-    let (mut window, events) = glfw.create_window(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", glfw::WindowMode::Windowed)
+    let (mut window, events) = glfw.create_window(SCR_WIDTH,
+                                                  SCR_HEIGHT,
+                                                  "LearnOpenGL",
+                                                  glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window");
 
     window.make_current();
@@ -57,14 +60,15 @@ fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::Windo
     for (_, event) in glfw::flush_messages(&events) {
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
-                // make sure the viewport matches the new window dimensions; note that width and 
+                // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
-            },
+            }
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                 window.set_should_close(true)
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
+
