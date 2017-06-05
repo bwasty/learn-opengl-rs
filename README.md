@@ -16,3 +16,4 @@ Run individual tutorials like this:
 | `/src/1.getting_started/2.3.hello_triangle_exercise1/` | `/src/bin/gs_2_3_hello_triangle_exercise1.rs` |
 | `/src/1.getting_started/2.4.hello_triangle_exercise2/` | `/src/bin/gs_2_4_hello_triangle_exercise2.rs` |
 | `/src/1.getting_started/2.5.hello_triangle_exercise3/` | `/src/bin/gs_2_5_hello_triangle_exercise3.rs` |
+| `/src/1.getting_started/3.1.shaders_uniform/` | `/src/bin/gs_3_1_shaders_uniform.rs` |

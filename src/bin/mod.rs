@@ -5,3 +5,4 @@ pub mod gs_2_2_hello_triangle_indexed;
 pub mod gs_2_3_hello_triangle_exercise1;
 pub mod gs_2_4_hello_triangle_exercise2;
 pub mod gs_2_5_hello_triangle_exercise3;
+pub mod gs_3_1_shaders_uniform;
