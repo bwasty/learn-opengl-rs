@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{ CString, CStr };
 use std::fs::File;
 use std::io::Read;
 use std::ptr;
@@ -52,6 +52,26 @@ impl Shader {
         }
 
         shader
+    }
+
+    /// activate the shader
+    /// ------------------------------------------------------------------------
+    pub unsafe fn useProgram(&self) {
+        gl::UseProgram(self.ID)
+    }
+
+    /// utility uniform functions
+    /// ------------------------------------------------------------------------
+    pub unsafe fn setBool(&self, name: &CStr, value: bool) {
+        gl::Uniform1i(gl::GetUniformLocation(self.ID, name.as_ptr()), value as i32);
+    }
+    /// ------------------------------------------------------------------------
+    pub unsafe fn setInt(&self, name: &CStr, value: i32) {
+        gl::Uniform1i(gl::GetUniformLocation(self.ID, name.as_ptr()), value);
+    }
+    /// ------------------------------------------------------------------------
+    pub unsafe fn setFloat(&self, name: &CStr, value: f32) {
+        gl::Uniform1f(gl::GetUniformLocation(self.ID, name.as_ptr()), value);
     }
 
     /// utility function for checking shader compilation/linking errors.
