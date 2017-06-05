@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use std::ffi::{ CString, CStr };
 use std::fs::File;
 use std::io::Read;
@@ -37,8 +38,8 @@ impl Shader {
             // fragment Shader
             let fragment = gl::CreateShader(gl::FRAGMENT_SHADER);
             gl::ShaderSource(fragment, 1, &fShaderCode.as_ptr(), ptr::null());
-            gl::CompileShader(vertex);
-            shader.checkCompileErrors(vertex, "FRAGMENT");
+            gl::CompileShader(fragment);
+            shader.checkCompileErrors(fragment, "FRAGMENT");
             // shader Program
             let ID = gl::CreateProgram();
             gl::AttachShader(ID, vertex);
