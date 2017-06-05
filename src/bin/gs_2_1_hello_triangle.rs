@@ -10,6 +10,7 @@ use std::ffi::CString;
 use std::ptr;
 use std::str;
 use std::mem;
+use std::os::raw::c_void;
 
 // settings
 const SCR_WIDTH: u32 = 800;
@@ -118,7 +119,7 @@ fn main() {
         gl::BufferData(
             gl::ARRAY_BUFFER,
             (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            mem::transmute(&vertices[0]),
+            &vertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW);
 
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * mem::size_of::<GLfloat>() as GLsizei, ptr::null());
@@ -165,7 +166,7 @@ fn main() {
 }
 
 fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
-    for (_, event) in glfw::flush_messages(&events) {
+    for (_, event) in glfw::flush_messages(events) {
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
                 // make sure the viewport matches the new window dimensions; note that width and
