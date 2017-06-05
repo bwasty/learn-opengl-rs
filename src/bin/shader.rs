@@ -12,6 +12,7 @@ pub struct Shader {
     ID: u32
 }
 
+#[allow(dead_code)]
 impl Shader {
     pub fn new(vertexPath: &str, fragmentPath: &str) -> Shader {
         let mut shader = Shader { ID: 0 };
