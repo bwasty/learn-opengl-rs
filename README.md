@@ -2,6 +2,7 @@
 Rust port of https://github.com/JoeyDeVries/LearnOpenGL
 
 You should be able to follow the tutorials on https://learnopengl.com/ with this - the code structure has been kept similar to the original C++ where possible.
+> This also means it's not necessarily the most idiomatic Rust code. For example, all OpenGL calls are "raw" and wrapped in `unsafe` blocks.
 
 Run individual tutorials like this:
 `cargo run --bin gs_1_2_hello_window_clear`
