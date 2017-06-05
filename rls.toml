@@ -1,2 +1,2 @@
 unstable_features = true
-build_lib = false
+build_lib = true
