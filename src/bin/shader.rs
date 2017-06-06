@@ -9,7 +9,7 @@ use gl;
 use gl::types::*;
 
 pub struct Shader {
-    ID: u32
+    pub ID: u32
 }
 
 #[allow(dead_code)]

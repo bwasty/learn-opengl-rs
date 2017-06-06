@@ -108,7 +108,7 @@ fn main() {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
         // load image, create texture and generate mipmaps
-        let img = image::open(&Path::new("src/textures/container.jpg")).expect("Failed to load texture");
+        let img = image::open(&Path::new("resources/textures/container.jpg")).expect("Failed to load texture");
         let data = img.raw_pixels();
         gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32, img.width() as i32, img.height() as i32,
             0, gl::RGB, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
