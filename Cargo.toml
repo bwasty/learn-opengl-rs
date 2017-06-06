@@ -4,7 +4,6 @@ name = "learn-opengl-rs"
 version = "0.1.0"
 
 [dependencies]
-c_string = "0.7.0"
 gl = "0.6.2"
 glfw = "0.14.0"
 image = "0.13.0"

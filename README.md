@@ -21,3 +21,4 @@ Run individual tutorials like this:
 | `/src/1.getting_started/3.2.shaders_interpolation/` | `/src/bin/gs_3_2_shaders_interpolation.rs` |
 | `/src/1.getting_started/3.3.shaders_class/` | `/src/bin/gs_3_3_shaders_class.rs` <br> `/src/bin/shaders.rs`
 | `/src/1.getting_started/4.1.textures/` | `/src/bin/gs_4_1_textures.rs`
+| `/src/1.getting_started/4.2.textures_combined/` | `/src/bin/gs_4_2_textures_combined.rs`

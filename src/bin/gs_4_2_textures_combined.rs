@@ -17,12 +17,18 @@ use shader::Shader;
 extern crate image;
 use image::GenericImage;
 
-#[macro_use]
-extern crate c_string;
-
 // settings
 const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
+
+/// Macro to get c strings from literals without runtime overhead
+/// Literal must not contain any interior nul bytes!
+macro_rules! c_str {
+    ($literal:expr) => {
+        std::ffi::CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
+    }
+}
+
 
 #[allow(dead_code)]
 #[allow(non_snake_case)]
@@ -131,6 +137,7 @@ fn main() {
         // load image, create texture and generate mipmaps
         // TODO!!: flip vertically...
         let img = image::open(&Path::new("resources/textures/awesomeface.png")).expect("Failed to load texture");
+        let img = img.flipv(); // flip loaded texture on the y-axis.
         let data = img.raw_pixels();
         // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
         gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32, img.width() as i32, img.height() as i32,
@@ -141,10 +148,8 @@ fn main() {
         // -------------------------------------------------------------------------------------------
         ourShader.useProgram(); // don't forget to activate/use the shader before setting uniforms!
         // either set it manually like so:
-        #[allow(unused_unsafe)] // TODO
         gl::Uniform1i(gl::GetUniformLocation(ourShader.ID, c_str!("texture1").as_ptr()), 0); // using c_str! macro to avoid runtime overhead
         // or set it via the texture class
-        #[allow(unused_unsafe)]
         ourShader.setInt(c_str!("texture2"), 1);
 
         (ourShader, VBO, VAO, EBO, texture1, texture2)
