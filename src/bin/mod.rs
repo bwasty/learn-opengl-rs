@@ -10,8 +10,5 @@ pub mod gs_3_2_shaders_interpolation;
 pub mod gs_3_3_shaders_class;
 pub mod gs_4_1_textures;
 pub mod gs_4_2_textures_combined;
-pub mod gs_4_3_textures_exercise2;
-pub mod gs_4_4_textures_exercise3;
-pub mod gs_4_5_textures_exercise4;
 pub mod gs_5_1_transformations;
 pub mod gs_5_2_transformations_exercise2;
