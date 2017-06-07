@@ -27,14 +27,14 @@ const vertexShaderSource: &str = r#"
 const fragmentShaderSource: &str = r#"
     #version 330 core
     out vec4 FragColor;
+    uniform vec4 ourColor;
     void main() {
-       FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+       FragColor = ourColor;
     }
 "#;
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-fn main() {
+pub fn main_1_3_1() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -56,7 +56,7 @@ fn main() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shaderProgram, VAO) = unsafe {
+    let shaderProgram = unsafe {
         // build and compile our shader program
         // ------------------------------------
         // vertex shader
@@ -130,12 +130,13 @@ fn main() {
 
         // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
         // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-        gl::BindVertexArray(0);
+        // gl::BindVertexArray(0);
 
-        // uncomment this call to draw in wireframe polygons.
-        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+        // bind the VAO (it was already bound, but just to demonstrate): seeing as we only have a single VAO we can
+        // just bind it beforehand before rendering the respective triangle; this is another approach.
+        gl::BindVertexArray(VAO);
 
-        (shaderProgram, VAO)
+        shaderProgram
     };
 
     // render loop
@@ -151,11 +152,18 @@ fn main() {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            // draw our first triangle
+            // be sure to activate the shader before any calls to glUniform
             gl::UseProgram(shaderProgram);
-            gl::BindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+
+            // update shader uniform
+            let timeValue = glfw.get_time() as f32;
+            let greenValue = timeValue.sin() / 2.0 + 0.5;
+            let ourColor = CString::new("ourColor").unwrap();
+            let vertexColorLocation = gl::GetUniformLocation(shaderProgram, ourColor.as_ptr());
+            gl::Uniform4f(vertexColorLocation, 0.0, greenValue, 0.0, 1.0);
+
+            // render the triangle
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
-            // glBindVertexArray(0); // no need to unbind it every time
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

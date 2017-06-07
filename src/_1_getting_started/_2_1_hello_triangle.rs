@@ -32,9 +32,8 @@ const fragmentShaderSource: &str = r#"
     }
 "#;
 
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-fn main() {
+pub fn main_1_2_1() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -104,20 +103,14 @@ fn main() {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 12] = [
-             0.5,  0.5, 0.0,  // top right
-             0.5, -0.5, 0.0,  // bottom right
-            -0.5, -0.5, 0.0,  // bottom left
-            -0.5,  0.5, 0.0   // top left
+        let vertices: [f32; 9] = [
+            -0.5, -0.5, 0.0, // left
+             0.5, -0.5, 0.0, // right
+             0.0,  0.5, 0.0  // top
         ];
-        let indices = [ // note that we start from 0!
-            0, 1, 3,  // first Triangle
-            1, 2, 3   // second Triangle
-        ];
-        let (mut VBO, mut VAO, mut EBO) = (0, 0, 0);
+        let (mut VBO, mut VAO) = (0, 0);
         gl::GenVertexArrays(1, &mut VAO);
         gl::GenBuffers(1, &mut VBO);
-        gl::GenBuffers(1, &mut EBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
         gl::BindVertexArray(VAO);
 
@@ -128,21 +121,11 @@ fn main() {
             &vertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW);
 
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, EBO);
-        gl::BufferData(
-            gl::ELEMENT_ARRAY_BUFFER,
-            (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &indices[0] as *const i32 as *const c_void,
-            gl::STATIC_DRAW);
-
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * mem::size_of::<GLfloat>() as GLsizei, ptr::null());
         gl::EnableVertexAttribArray(0);
 
         // note that this is allowed, the call to gl::VertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-
-        // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-        // gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
 
         // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
         // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
@@ -170,8 +153,7 @@ fn main() {
             // draw our first triangle
             gl::UseProgram(shaderProgram);
             gl::BindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-            // gl::DrawArrays(gl::TRIANGLES, 0, 3);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
             // glBindVertexArray(0); // no need to unbind it every time
         }
 

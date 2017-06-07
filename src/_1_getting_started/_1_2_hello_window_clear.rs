@@ -9,8 +9,7 @@ use std::sync::mpsc::Receiver;
 const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
-#[allow(dead_code)]
-fn main() {
+pub fn main_1_1_2() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();

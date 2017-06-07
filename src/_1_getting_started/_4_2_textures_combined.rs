@@ -10,11 +10,11 @@ use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
 use std::path::Path;
+use std::ffi::CStr;
 
-mod shader;
-use shader::Shader;
+use ::shader::Shader;
 
-extern crate image;
+use image;
 use image::GenericImage;
 
 // settings
@@ -25,14 +25,12 @@ const SCR_HEIGHT: u32 = 600;
 /// Literal must not contain any interior nul bytes!
 macro_rules! c_str {
     ($literal:expr) => {
-        std::ffi::CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
+        CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
     }
 }
 
-
-#[allow(dead_code)]
 #[allow(non_snake_case)]
-fn main() {
+pub fn main_1_4_2() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
