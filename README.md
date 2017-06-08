@@ -10,18 +10,17 @@ Run individual tutorials like this:
 ### Ported so far
 | Original | Port |
 | --- | --- |
-|`/src/1.getting_started/1.1.hello_window/` | See 1.2 (same with just 2 code lines more) |
-| `/src/1.getting_started/1.2.hello_window_clear/` | `/src/_1_getting_started/_1_2_hello_window_clear.rs` |
-| `/src/1.getting_started/2.1.hello_triangle/` | `/src/_1_getting_started/_2_1_hello_triangle.rs` |
-| `/src/1.getting_started/2.2.hello_triangle_indexed/` | `/src/_1_getting_started/_2_2_hello_triangle_indexed.rs` |
-| `/src/1.getting_started/2.3.hello_triangle_exercise1/` | `/src/_1_getting_started/_2_3_hello_triangle_exercise1.rs` |
-| `/src/1.getting_started/2.4.hello_triangle_exercise2/` | `/src/_1_getting_started/_2_4_hello_triangle_exercise2.rs` |
-| `/src/1.getting_started/2.5.hello_triangle_exercise3/` | `/src/_1_getting_started/_2_5_hello_triangle_exercise3.rs` |
-| `/src/1.getting_started/3.1.shaders_uniform/` | `/src/_1_getting_started/_3_1_shaders_uniform.rs` |
-| `/src/1.getting_started/3.2.shaders_interpolation/` | `/src/_1_getting_started/_3_2_shaders_interpolation.rs` |
-| `/src/1.getting_started/3.3.shaders_class/` | `/src/_1_getting_started/_3_3_shaders_class.rs` <br> `/src/bin/shaders.rs`
-| `/src/1.getting_started/4.1.textures/` | `/src/_1_getting_started/_4_1_textures.rs`
-| `/src/1.getting_started/4.2.textures_combined/` | `/src/_1_getting_started/_4_2_textures_combined.rs`
-| `/src/1.getting_started/4.3.textures_exercise2/` | _skipped_
-| `/src/1.getting_started/4.4.textures_exercise3/` | _skipped_
-| `/src/1.getting_started/4.5.textures_exercise4/` | _skipped_
+|`1.getting_started/1.1.hello_window/` | See 1.2 (same with just 2 code lines more) |
+| `1.getting_started/1.2.hello_window_clear/` | `_1_getting_started/_1_2_hello_window_clear.rs` |
+| `1.getting_started/2.1.hello_triangle/` | `_1_getting_started/_2_1_hello_triangle.rs` |
+| `1.getting_started/2.2.hello_triangle_indexed/` | `_1_getting_started/_2_2_hello_triangle_indexed.rs` |
+| `1.getting_started/2.3.hello_triangle_exercise1/` | `_1_getting_started/_2_3_hello_triangle_exercise1.rs` |
+| `1.getting_started/2.4.hello_triangle_exercise2/` | `_1_getting_started/_2_4_hello_triangle_exercise2.rs` |
+| `1.getting_started/2.5.hello_triangle_exercise3/` | `_1_getting_started/_2_5_hello_triangle_exercise3.rs` |
+| `1.getting_started/3.1.shaders_uniform/` | `_1_getting_started/_3_1_shaders_uniform.rs` |
+| `1.getting_started/3.2.shaders_interpolation/` | `_1_getting_started/_3_2_shaders_interpolation.rs` |
+| `1.getting_started/3.3.shaders_class/` | `_1_getting_started/_3_3_shaders_class.rs` <br> `bin/shaders.rs`
+| `1.getting_started/4.1.textures/` | `_1_getting_started/_4_1_textures.rs`
+| `1.getting_started/4.2.textures_combined/` | `_1_getting_started/_4_2_textures_combined.rs`
+| _(skipped 3 exercises)_ |
+| `1.getting_started/5.1.transforms/` | `_1_getting_started/_5_1_transform.rs`

@@ -1,5 +1,6 @@
 extern crate gl;
 extern crate image;
+extern crate cgmath;
 
 mod shader;
 mod utils;
@@ -26,7 +27,7 @@ fn main() {
         "1_3_3" => main_1_3_3(),
         "1_4_1" => main_1_4_1(),
         "1_4_2" => main_1_4_2(),
-        // "1_5_1" => main_1_5_1(),
+        "1_5_1" => main_1_5_1(),
         _ =>  println!("Unkown tutorial id")
     }
 
