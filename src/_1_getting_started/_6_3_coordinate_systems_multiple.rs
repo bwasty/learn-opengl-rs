@@ -25,7 +25,7 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
-pub fn main_1_6_2() {
+pub fn main_1_6_3() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -47,7 +47,7 @@ pub fn main_1_6_2() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (ourShader, VBO, VAO, texture1, texture2) = unsafe {
+    let (ourShader, VBO, VAO, texture1, texture2, cubePositions) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -100,6 +100,19 @@ pub fn main_1_6_2() {
              0.5,  0.5,  0.5,  1.0, 0.0,
             -0.5,  0.5,  0.5,  0.0, 0.0,
             -0.5,  0.5, -0.5,  0.0, 1.0
+        ];
+        // world space positions of our cubes
+        let cubePositions: [Vector3<f32>; 10] = [
+            Vector3::new( 0.0,  0.0,  0.0),
+            Vector3::new( 2.0,  5.0, -15.0),
+            Vector3::new(-1.5, -2.2, -2.5),
+            Vector3::new(-3.8, -2.0, -12.3),
+            Vector3::new( 2.4, -0.4, -3.5),
+            Vector3::new(-1.7,  3.0, -7.5),
+            Vector3::new( 1.3, -2.0, -2.5),
+            Vector3::new( 1.5,  2.0, -2.5),
+            Vector3::new( 1.5,  0.2, -1.5),
+            Vector3::new(-1.3,  1.0, -1.5)
         ];
         let (mut VBO, mut VAO) = (0, 0);
         gl::GenVertexArrays(1, &mut VAO);
@@ -167,7 +180,7 @@ pub fn main_1_6_2() {
         ourShader.setInt(c_str!("texture1"), 0);
         ourShader.setInt(c_str!("texture2"), 1);
 
-        (ourShader, VBO, VAO, texture1, texture2)
+        (ourShader, VBO, VAO, texture1, texture2, cubePositions)
     };
 
     // render loop
@@ -208,7 +221,14 @@ pub fn main_1_6_2() {
 
             // render container
             gl::BindVertexArray(VAO);
-            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            for (i, position) in cubePositions.iter().enumerate() {
+                let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
+                let angle = 20.0 * i as f32;
+                model = model * Matrix4::from_axis_angle(Vector3::new(1.0, 0.3, 0.5).normalize(), Deg(angle));
+                ourShader.setMat4(c_str!("model"), &model);
+
+                gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            }
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
