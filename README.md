@@ -22,5 +22,6 @@ Run individual tutorials like this:
 | `1.getting_started/3.3.shaders_class/` | `_1_getting_started/_3_3_shaders_class.rs` <br> `bin/shaders.rs`
 | `1.getting_started/4.1.textures/` | `_1_getting_started/_4_1_textures.rs`
 | `1.getting_started/4.2.textures_combined/` | `_1_getting_started/_4_2_textures_combined.rs`
-| _(skipped 3 exercises)_ |
 | `1.getting_started/5.1.transforms/` | `_1_getting_started/_5_1_transform.rs`
+| `1.getting_started/6.1.coordinate_systems/` | `_1_getting_started/_6_1_coordinate_systems.rs`
+| `1.getting_started/6.2.coordinate_systems_depth/` | `_1_getting_started/_6_2_coordinate_systems_depth.rs`

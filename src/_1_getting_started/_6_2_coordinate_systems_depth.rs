@@ -17,7 +17,7 @@ use ::shader::Shader;
 use image;
 use image::GenericImage;
 
-use cgmath::{Matrix4, Vector3, Rad};
+use cgmath::{Matrix4, Vector3, Deg, Rad, perspective};
 use cgmath::prelude::*;
 
 // settings
@@ -25,7 +25,7 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
-pub fn main_1_5_1() {
+pub fn main_1_6_2() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -47,29 +47,63 @@ pub fn main_1_5_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (ourShader, VBO, VAO, EBO, texture1, texture2) = unsafe {
+    let (ourShader, VBO, VAO, texture1, texture2) = unsafe {
+        // configure global opengl state
+        // -----------------------------
+        gl::Enable(gl::DEPTH_TEST);
+
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/shaders/5.1.transform.vs", "src/shaders/5.1.transform.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new("src/shaders/6.2.coordinate_systems.vs", "src/shaders/6.2.coordinate_systems.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
-        // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 20] = [
-            // positions       // texture coords
-             0.5,  0.5, 0.0,   1.0, 1.0, // top right
-             0.5, -0.5, 0.0,   1.0, 0.0, // bottom right
-            -0.5, -0.5, 0.0,   0.0, 0.0, // bottom left
-            -0.5,  0.5, 0.0,   0.0, 1.0  // top left
+        let vertices: [f32; 180] = [
+            -0.5, -0.5, -0.5,  0.0, 0.0,
+             0.5, -0.5, -0.5,  1.0, 0.0,
+             0.5,  0.5, -0.5,  1.0, 1.0,
+             0.5,  0.5, -0.5,  1.0, 1.0,
+            -0.5,  0.5, -0.5,  0.0, 1.0,
+            -0.5, -0.5, -0.5,  0.0, 0.0,
+
+            -0.5, -0.5,  0.5,  0.0, 0.0,
+             0.5, -0.5,  0.5,  1.0, 0.0,
+             0.5,  0.5,  0.5,  1.0, 1.0,
+             0.5,  0.5,  0.5,  1.0, 1.0,
+            -0.5,  0.5,  0.5,  0.0, 1.0,
+            -0.5, -0.5,  0.5,  0.0, 0.0,
+
+            -0.5,  0.5,  0.5,  1.0, 0.0,
+            -0.5,  0.5, -0.5,  1.0, 1.0,
+            -0.5, -0.5, -0.5,  0.0, 1.0,
+            -0.5, -0.5, -0.5,  0.0, 1.0,
+            -0.5, -0.5,  0.5,  0.0, 0.0,
+            -0.5,  0.5,  0.5,  1.0, 0.0,
+
+             0.5,  0.5,  0.5,  1.0, 0.0,
+             0.5,  0.5, -0.5,  1.0, 1.0,
+             0.5, -0.5, -0.5,  0.0, 1.0,
+             0.5, -0.5, -0.5,  0.0, 1.0,
+             0.5, -0.5,  0.5,  0.0, 0.0,
+             0.5,  0.5,  0.5,  1.0, 0.0,
+
+            -0.5, -0.5, -0.5,  0.0, 1.0,
+             0.5, -0.5, -0.5,  1.0, 1.0,
+             0.5, -0.5,  0.5,  1.0, 0.0,
+             0.5, -0.5,  0.5,  1.0, 0.0,
+            -0.5, -0.5,  0.5,  0.0, 0.0,
+            -0.5, -0.5, -0.5,  0.0, 1.0,
+
+            -0.5,  0.5, -0.5,  0.0, 1.0,
+             0.5,  0.5, -0.5,  1.0, 1.0,
+             0.5,  0.5,  0.5,  1.0, 0.0,
+             0.5,  0.5,  0.5,  1.0, 0.0,
+            -0.5,  0.5,  0.5,  0.0, 0.0,
+            -0.5,  0.5, -0.5,  0.0, 1.0
         ];
-        let indices = [
-            0, 1, 3,  // first Triangle
-            1, 2, 3   // second Triangle
-        ];
-        let (mut VBO, mut VAO, mut EBO) = (0, 0, 0);
+        let (mut VBO, mut VAO) = (0, 0);
         gl::GenVertexArrays(1, &mut VAO);
         gl::GenBuffers(1, &mut VBO);
-        gl::GenBuffers(1, &mut EBO);
 
         gl::BindVertexArray(VAO);
 
@@ -80,13 +114,6 @@ pub fn main_1_5_1() {
             &vertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW);
 
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, EBO);
-        gl::BufferData(
-            gl::ELEMENT_ARRAY_BUFFER,
-            (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &indices[0] as *const i32 as *const c_void,
-            gl::STATIC_DRAW);
-
         let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
         // position attribute
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
@@ -94,6 +121,7 @@ pub fn main_1_5_1() {
         // texture coord attribute
         gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         gl::EnableVertexAttribArray(1);
+
 
         // load and create a texture
         // -------------------------
@@ -139,7 +167,7 @@ pub fn main_1_5_1() {
         ourShader.setInt(c_str!("texture1"), 0);
         ourShader.setInt(c_str!("texture2"), 1);
 
-        (ourShader, VBO, VAO, EBO, texture1, texture2)
+        (ourShader, VBO, VAO, texture1, texture2)
     };
 
     // render loop
@@ -153,7 +181,7 @@ pub fn main_1_5_1() {
         // ------
         unsafe {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             // bind textures on corresponding texture units
             gl::ActiveTexture(gl::TEXTURE0);
@@ -161,20 +189,26 @@ pub fn main_1_5_1() {
             gl::ActiveTexture(gl::TEXTURE1);
             gl::BindTexture(gl::TEXTURE_2D, texture2);
 
-            // create transformations
-            let mut transform: Matrix4<f32> = Matrix4::identity();
-            transform = transform * Matrix4::<f32>::from_translation(Vector3::new(0.5, -0.5, 0.0));
-            transform = transform * Matrix4::<f32>::from_angle_z(Rad(glfw.get_time() as f32));
-
-            // get matrix's uniform location and set matrix
+            // activate shader
             ourShader.useProgram();
-            let  transformLoc = gl::GetUniformLocation(ourShader.ID, c_str!("transform").as_ptr());
-            gl::UniformMatrix4fv(transformLoc, 1, gl::FALSE, transform.as_ptr());
+
+            // create transformations
+            // NOTE: cgmath requires axis vectors to be normalized!
+            let model: Matrix4<f32> = Matrix4::from_axis_angle(Vector3::new(0.5, 1.0, 0.0).normalize(), Rad(glfw.get_time() as f32));
+            let view: Matrix4<f32> = Matrix4::from_translation(Vector3::new(0., 0., -3.));
+            let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_HEIGHT / SCR_HEIGHT) as f32, 0.1, 100.0);
+            // retrieve the matrix uniform locations
+            let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
+            let viewLoc = gl::GetUniformLocation(ourShader.ID, c_str!("view").as_ptr());
+            // pass them to the shaders (3 different ways)
+            gl::UniformMatrix4fv(modelLoc, 1, gl::FALSE, model.as_ptr());
+            gl::UniformMatrix4fv(viewLoc, 1, gl::FALSE, &view[0][0]);
+            // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+            ourShader.setMat4(c_str!("projection"), &projection);
 
             // render container
             gl::BindVertexArray(VAO);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-        }
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);        }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -187,7 +221,6 @@ pub fn main_1_5_1() {
     unsafe {
         gl::DeleteVertexArrays(1, &VAO);
         gl::DeleteBuffers(1, &VBO);
-        gl::DeleteBuffers(1, &EBO);
     }
 }
 
