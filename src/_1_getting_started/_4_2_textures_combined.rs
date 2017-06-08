@@ -125,7 +125,6 @@ pub fn main_1_4_2() {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
         // load image, create texture and generate mipmaps
-        // TODO!!: flip vertically...
         let img = image::open(&Path::new("resources/textures/awesomeface.png")).expect("Failed to load texture");
         let img = img.flipv(); // flip loaded texture on the y-axis.
         let data = img.raw_pixels();

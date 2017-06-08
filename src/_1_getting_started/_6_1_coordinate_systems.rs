@@ -17,7 +17,7 @@ use ::shader::Shader;
 use image;
 use image::GenericImage;
 
-use cgmath::{Matrix4, Vector3, Rad};
+use cgmath::{Matrix4, Vector3, Deg, perspective};
 use cgmath::prelude::*;
 
 // settings
@@ -25,7 +25,7 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
-pub fn main_1_5_1() {
+pub fn main_1_6_1() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -50,7 +50,7 @@ pub fn main_1_5_1() {
     let (ourShader, VBO, VAO, EBO, texture1, texture2) = unsafe {
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/shaders/5.1.transform.vs", "src/shaders/5.1.transform.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new("src/shaders/6.1.coordinate_systems.vs", "src/shaders/6.1.coordinate_systems.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -94,6 +94,7 @@ pub fn main_1_5_1() {
         // texture coord attribute
         gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         gl::EnableVertexAttribArray(1);
+
 
         // load and create a texture
         // -------------------------
@@ -161,16 +162,21 @@ pub fn main_1_5_1() {
             gl::ActiveTexture(gl::TEXTURE1);
             gl::BindTexture(gl::TEXTURE_2D, texture2);
 
-            // create transformations
-            let mut transform: Matrix4<f32> = Matrix4::identity();
-            transform = transform * Matrix4::<f32>::from_translation(Vector3::new(0.5, -0.5, 0.0));
-            transform = transform * Matrix4::<f32>::from_axis_angle(Vector3::new(0., 0., 1.),
-                Rad(glfw.get_time() as f32));
-
-            // get matrix's uniform location and set matrix
+            // activate shader
             ourShader.useProgram();
-            let  transformLoc = gl::GetUniformLocation(ourShader.ID, c_str!("transform").as_ptr());
-            gl::UniformMatrix4fv(transformLoc, 1, gl::FALSE, transform.as_ptr());
+
+            // create transformations
+            let model: Matrix4<f32> = Matrix4::from_angle_x(Deg(-55.));
+            let view: Matrix4<f32> = Matrix4::from_translation(Vector3::new(0., 0., -3.));
+            let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            // retrieve the matrix uniform locations
+            let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
+            let viewLoc = gl::GetUniformLocation(ourShader.ID, c_str!("view").as_ptr());
+            // pass them to the shaders (3 different ways)
+            gl::UniformMatrix4fv(modelLoc, 1, gl::FALSE, model.as_ptr());
+            gl::UniformMatrix4fv(viewLoc, 1, gl::FALSE, &view[0][0]);
+            // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+            ourShader.setMat4(c_str!("projection"), &projection);
 
             // render container
             gl::BindVertexArray(VAO);
