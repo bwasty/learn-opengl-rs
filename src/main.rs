@@ -2,6 +2,7 @@ extern crate gl;
 extern crate image;
 
 mod shader;
+mod utils;
 
 mod _1_getting_started;
 use _1_getting_started::*;

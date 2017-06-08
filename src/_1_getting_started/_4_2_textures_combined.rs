@@ -21,14 +21,6 @@ use image::GenericImage;
 const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
-/// Macro to get c strings from literals without runtime overhead
-/// Literal must not contain any interior nul bytes!
-macro_rules! c_str {
-    ($literal:expr) => {
-        CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
-    }
-}
-
 #[allow(non_snake_case)]
 pub fn main_1_4_2() {
     // glfw: initialize and configure
