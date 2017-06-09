@@ -51,7 +51,6 @@ pub fn main_1_7_2() {
         .expect("Failed to create GLFW window");
 
     window.make_current();
-    window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
 
     // gl: load all OpenGL function pointers
@@ -210,7 +209,11 @@ pub fn main_1_7_2() {
 
         // events
         // -----
-        process_events(&mut window, &events, deltaTime, &mut cameraPos);
+        process_events(&events);
+
+        // input
+        // -----
+        processInput(&mut window, deltaTime, &mut cameraPos);
 
         // render
         // ------
@@ -261,13 +264,7 @@ pub fn main_1_7_2() {
     }
 }
 
-fn process_events(
-    window: &mut glfw::Window,
-    events: &Receiver<(f64, glfw::WindowEvent)>,
-    deltaTime: f32,
-    cameraPos: &mut Point3<f32>
-) {
-    let cameraSpeed = 2.5 * deltaTime;
+fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>) {
     for (_, event) in glfw::flush_messages(events) {
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
@@ -275,22 +272,28 @@ fn process_events(
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
             },
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                window.set_should_close(true)
-            },
-            glfw::WindowEvent::Key(Key::W, _, Action::Press, _) => {
-                *cameraPos += cameraSpeed * cameraFront;
-            },
-            glfw::WindowEvent::Key(Key::S, _, Action::Press, _) => {
-                *cameraPos += -(cameraSpeed * cameraFront);
-            },
-            glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
-                *cameraPos += -(cameraFront.cross(cameraUp).normalize() * cameraSpeed);
-            },
-            glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
-                *cameraPos += cameraFront.cross(cameraUp).normalize() * cameraSpeed;
-            },
             _ => {},
         }
     }
+}
+
+fn processInput(window: &mut glfw::Window, deltaTime: f32, cameraPos: &mut Point3<f32>) {
+    if window.get_key(Key::Escape) == Action::Press {
+        window.set_should_close(true)
+    }
+
+    let cameraSpeed = 2.5 * deltaTime;
+    if window.get_key(Key::W) == Action::Press {
+        *cameraPos += cameraSpeed * cameraFront;
+    }
+    if window.get_key(Key::S) == Action::Press {
+        *cameraPos += -(cameraSpeed * cameraFront);
+    }
+    if window.get_key(Key::A) == Action::Press {
+        *cameraPos += -(cameraFront.cross(cameraUp).normalize() * cameraSpeed);
+    }
+    if window.get_key(Key::D) == Action::Press {
+        *cameraPos += cameraFront.cross(cameraUp).normalize() * cameraSpeed;
+    }
+
 }
