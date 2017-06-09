@@ -14,7 +14,7 @@ pub struct Shader {
     pub ID: u32
 }
 
-/// NOTE: mixture of shader_s.h and shader_m.h (the latter just contains
+/// NOTE: mixture of `shader_s.h` and `shader_m.h` (the latter just contains
 /// a few setters for uniforms)
 #[allow(dead_code)]
 impl Shader {

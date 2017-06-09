@@ -17,7 +17,7 @@ use ::shader::Shader;
 use image;
 use image::GenericImage;
 
-use cgmath::{Matrix4, Vector3, Deg, Rad, perspective};
+use cgmath::{Matrix4, Vector3, Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
@@ -180,6 +180,11 @@ pub fn main_1_7_1() {
         ourShader.setInt(c_str!("texture1"), 0);
         ourShader.setInt(c_str!("texture2"), 1);
 
+        // pass projection matrix to shader (as projection matrix rarely changes there's no need to do this per frame)
+        // -----------------------------------------------------------------------------------------------------------
+        let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+        ourShader.setMat4(c_str!("projection"), &projection);
+
         (ourShader, VBO, VAO, texture1, texture2, cubePositions)
     };
 
@@ -205,23 +210,20 @@ pub fn main_1_7_1() {
             // activate shader
             ourShader.useProgram();
 
-            // create transformations
-            // NOTE: cgmath requires axis vectors to be normalized!
-            let model: Matrix4<f32> = Matrix4::from_axis_angle(Vector3::new(0.5, 1.0, 0.0).normalize(), Rad(glfw.get_time() as f32));
-            let view: Matrix4<f32> = Matrix4::from_translation(Vector3::new(0., 0., -3.));
-            let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
-            // retrieve the matrix uniform locations
-            let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
-            let viewLoc = gl::GetUniformLocation(ourShader.ID, c_str!("view").as_ptr());
-            // pass them to the shaders (3 different ways)
-            gl::UniformMatrix4fv(modelLoc, 1, gl::FALSE, model.as_ptr());
-            gl::UniformMatrix4fv(viewLoc, 1, gl::FALSE, &view[0][0]);
-            // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-            ourShader.setMat4(c_str!("projection"), &projection);
+            // camera/view transformation
+            let radius: f32 = 10.0;
+            let camX = glfw.get_time().sin() as f32 * radius;
+            let camZ = glfw.get_time().cos() as f32 * radius;
+            let view: Matrix4<f32> = Matrix4::look_at(
+                Point3::new(camX, 0.0, camZ),
+                Point3::new(0.0, 0.0, 0.0),
+                Vector3::new(0.0, 1.0, 0.0));
+            ourShader.setMat4(c_str!("view"), &view);
 
-            // render container
+            // render boxes
             gl::BindVertexArray(VAO);
             for (i, position) in cubePositions.iter().enumerate() {
+                // calculate the model matrix for each object and pass it to shader before drawing
                 let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
                 let angle = 20.0 * i as f32;
                 model = model * Matrix4::from_axis_angle(Vector3::new(1.0, 0.3, 0.5).normalize(), Deg(angle));

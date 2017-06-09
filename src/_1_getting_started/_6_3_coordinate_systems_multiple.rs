@@ -219,9 +219,10 @@ pub fn main_1_6_3() {
             // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
             ourShader.setMat4(c_str!("projection"), &projection);
 
-            // render container
+            // render boxes
             gl::BindVertexArray(VAO);
             for (i, position) in cubePositions.iter().enumerate() {
+                // calculate the model matrix for each object and pass it to shader before drawing
                 let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
                 let angle = 20.0 * i as f32;
                 model = model * Matrix4::from_axis_angle(Vector3::new(1.0, 0.3, 0.5).normalize(), Deg(angle));
