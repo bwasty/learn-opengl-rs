@@ -26,10 +26,10 @@
 // pub use self::_6_1_coordinate_systems::*;
 // mod _6_2_coordinate_systems_depth;
 // pub use self::_6_2_coordinate_systems_depth::*;
-mod _6_3_coordinate_systems_multiple;
-pub use self::_6_3_coordinate_systems_multiple::*;
-mod _7_1_camera_circle;
-pub use self::_7_1_camera_circle::*;
+// mod _6_3_coordinate_systems_multiple;
+// pub use self::_6_3_coordinate_systems_multiple::*;
+// mod _7_1_camera_circle;
+// pub use self::_7_1_camera_circle::*;
 mod _7_2_camera_keyboard_dt;
 pub use self::_7_2_camera_keyboard_dt::*;
 mod _7_3_camera_mouse_zoom;
