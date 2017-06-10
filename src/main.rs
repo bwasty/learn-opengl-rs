@@ -4,6 +4,7 @@ extern crate cgmath;
 
 mod shader;
 mod utils;
+mod camera;
 
 mod _1_getting_started;
 use _1_getting_started::*;
