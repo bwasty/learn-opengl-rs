@@ -1,4 +1,5 @@
-#[allow(non_camel_case_types)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
 
 use cgmath;
 use cgmath::{vec3};
@@ -50,8 +51,20 @@ impl Camera {
         }
     }
 
+    // TODO? constructor with scalar values
+
+    /// Calculates the front vector from the Camera's (updated) Eular Angles
     fn updateCameraVectors(&mut self) {
-        unimplemented!()
+        // Calculate the new Front vector
+        let front = Vector3 {
+            x: self.Yaw.to_radians().cos() * self.Pitch.to_radians().cos(),
+            y: self.Pitch.to_radians().sin(),
+            z: self.Yaw.to_radians().sin() * self.Pitch.to_radians().cos()
+        };
+        self.Front = front.normalize();
+        // Also re-calculate the Right and Up vector
+        self.Right = self.Front.cross(self.WorldUp).normalize(); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+        self.Up = self.Right.cross(self.Front).normalize();
     }
 }
 
