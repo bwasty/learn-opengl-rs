@@ -3,3 +3,4 @@
 * remove redundant shaders for subsequent tutorials?
 * Vector3::new() -> vec3()
 * adapt old event/input handling code?
+* rustfmt
