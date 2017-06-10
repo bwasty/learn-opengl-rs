@@ -1,6 +1,6 @@
 #![allow(non_upper_case_globals)]
 extern crate glfw;
-use self::glfw::{ Context, Key, Action };
+use self::glfw::{Context, Key, Action};
 
 extern crate gl;
 use self::gl::types::*;
@@ -111,11 +111,10 @@ pub fn main_1_2_5() {
         gl::BindVertexArray(VAOs[0]);
         gl::BindBuffer(gl::ARRAY_BUFFER, VBOs[0]);
         // Vertex attributes stay the same
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (firstTriangle.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &firstTriangle[0] as *const f32 as *const c_void,
-            gl::STATIC_DRAW);
+        gl::BufferData(gl::ARRAY_BUFFER,
+                       (firstTriangle.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                       &firstTriangle[0] as *const f32 as *const c_void,
+                       gl::STATIC_DRAW);
 
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * mem::size_of::<GLfloat>() as GLsizei, ptr::null());
         gl::EnableVertexAttribArray(0);
@@ -124,11 +123,10 @@ pub fn main_1_2_5() {
         // ---------------------
         gl::BindVertexArray(VAOs[1]);
         gl::BindBuffer(gl::ARRAY_BUFFER, VBOs[1]);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (secondTriangle.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &secondTriangle[0] as *const f32 as *const c_void,
-            gl::STATIC_DRAW);
+        gl::BufferData(gl::ARRAY_BUFFER,
+                       (secondTriangle.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                       &secondTriangle[0] as *const f32 as *const c_void,
+                       gl::STATIC_DRAW);
 
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null()); // because the vertex data is tightly packed we can also specify 0 as the vertex attribute's stride to let OpenGL figure it out
         gl::EnableVertexAttribArray(0);
@@ -157,7 +155,7 @@ pub fn main_1_2_5() {
             gl::UseProgram(shaderProgramOrange);
             // draw the first triangle using the data from our first VAO
             gl::BindVertexArray(VAOs[0]);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);    // this call should output an orange triangle
+            gl::DrawArrays(gl::TRIANGLES, 0, 3); // this call should output an orange triangle
             // then we draw the second triangle using the data from the second VAO
             // when we draw the second triangle we want to use a different shader program so we switch to the shader program with our yellow fragment shader.
             gl::UseProgram(shaderProgramYellow);
@@ -186,11 +184,9 @@ fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::Windo
                 // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
-            },
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                window.set_should_close(true)
-            },
-            _ => {},
+            }
+            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
+            _ => {}
         }
     }
 }

@@ -2,7 +2,7 @@
 #![allow(non_snake_case)]
 
 extern crate glfw;
-use self::glfw::{ Context, Key, Action };
+use self::glfw::{Context, Key, Action};
 
 extern crate gl;
 use self::gl::types::*;
@@ -14,7 +14,7 @@ use std::os::raw::c_void;
 use std::path::Path;
 use std::ffi::CStr;
 
-use ::shader::Shader;
+use shader::Shader;
 
 use image;
 use image::GenericImage;
@@ -27,11 +27,19 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 // camera
-const cameraFront: Vector3<f32> = Vector3 { x: 0.0, y: 0.0, z: -1.0 };
-const cameraUp:    Vector3<f32> = Vector3 { x: 0.0, y: 1.0, z:  0.0 };
+const cameraFront: Vector3<f32> = Vector3 {
+    x: 0.0,
+    y: 0.0,
+    z: -1.0,
+};
+const cameraUp: Vector3<f32> = Vector3 {
+    x: 0.0,
+    y: 1.0,
+    z: 0.0,
+};
 
 pub fn main_1_7_2() {
-    let mut cameraPos = Point3::new(0.0, 0.0,  3.0);
+    let mut cameraPos = Point3::new(0.0, 0.0, 3.0);
 
     // timing
     let mut deltaTime: f32; // time between current frame and last frame
@@ -68,62 +76,28 @@ pub fn main_1_7_2() {
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
-        let vertices: [f32; 180] = [
-            -0.5, -0.5, -0.5,  0.0, 0.0,
-             0.5, -0.5, -0.5,  1.0, 0.0,
-             0.5,  0.5, -0.5,  1.0, 1.0,
-             0.5,  0.5, -0.5,  1.0, 1.0,
-            -0.5,  0.5, -0.5,  0.0, 1.0,
-            -0.5, -0.5, -0.5,  0.0, 0.0,
-
-            -0.5, -0.5,  0.5,  0.0, 0.0,
-             0.5, -0.5,  0.5,  1.0, 0.0,
-             0.5,  0.5,  0.5,  1.0, 1.0,
-             0.5,  0.5,  0.5,  1.0, 1.0,
-            -0.5,  0.5,  0.5,  0.0, 1.0,
-            -0.5, -0.5,  0.5,  0.0, 0.0,
-
-            -0.5,  0.5,  0.5,  1.0, 0.0,
-            -0.5,  0.5, -0.5,  1.0, 1.0,
-            -0.5, -0.5, -0.5,  0.0, 1.0,
-            -0.5, -0.5, -0.5,  0.0, 1.0,
-            -0.5, -0.5,  0.5,  0.0, 0.0,
-            -0.5,  0.5,  0.5,  1.0, 0.0,
-
-             0.5,  0.5,  0.5,  1.0, 0.0,
-             0.5,  0.5, -0.5,  1.0, 1.0,
-             0.5, -0.5, -0.5,  0.0, 1.0,
-             0.5, -0.5, -0.5,  0.0, 1.0,
-             0.5, -0.5,  0.5,  0.0, 0.0,
-             0.5,  0.5,  0.5,  1.0, 0.0,
-
-            -0.5, -0.5, -0.5,  0.0, 1.0,
-             0.5, -0.5, -0.5,  1.0, 1.0,
-             0.5, -0.5,  0.5,  1.0, 0.0,
-             0.5, -0.5,  0.5,  1.0, 0.0,
-            -0.5, -0.5,  0.5,  0.0, 0.0,
-            -0.5, -0.5, -0.5,  0.0, 1.0,
-
-            -0.5,  0.5, -0.5,  0.0, 1.0,
-             0.5,  0.5, -0.5,  1.0, 1.0,
-             0.5,  0.5,  0.5,  1.0, 0.0,
-             0.5,  0.5,  0.5,  1.0, 0.0,
-            -0.5,  0.5,  0.5,  0.0, 0.0,
-            -0.5,  0.5, -0.5,  0.0, 1.0
-        ];
+        let vertices: [f32; 180] =
+            [-0.5, -0.5, -0.5, 0.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.5, 0.5, -0.5, 1.0, 1.0, 0.5, 0.5, -0.5, 1.0,
+             1.0, -0.5, 0.5, -0.5, 0.0, 1.0, -0.5, -0.5, -0.5, 0.0, 0.0, -0.5, -0.5, 0.5, 0.0, 0.0, 0.5, -0.5, 0.5,
+             1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 1.0, -0.5, 0.5, 0.5, 0.0, 1.0, -0.5, -0.5, 0.5,
+             0.0, 0.0, -0.5, 0.5, 0.5, 1.0, 0.0, -0.5, 0.5, -0.5, 1.0, 1.0, -0.5, -0.5, -0.5, 0.0, 1.0, -0.5, -0.5,
+             -0.5, 0.0, 1.0, -0.5, -0.5, 0.5, 0.0, 0.0, -0.5, 0.5, 0.5, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.5, 0.5,
+             -0.5, 1.0, 1.0, 0.5, -0.5, -0.5, 0.0, 1.0, 0.5, -0.5, -0.5, 0.0, 1.0, 0.5, -0.5, 0.5, 0.0, 0.0, 0.5, 0.5,
+             0.5, 1.0, 0.0, -0.5, -0.5, -0.5, 0.0, 1.0, 0.5, -0.5, -0.5, 1.0, 1.0, 0.5, -0.5, 0.5, 1.0, 0.0, 0.5,
+             -0.5, 0.5, 1.0, 0.0, -0.5, -0.5, 0.5, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, 1.0, -0.5, 0.5, -0.5, 0.0, 1.0,
+             0.5, 0.5, -0.5, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, -0.5, 0.5, 0.5, 0.0, 0.0,
+             -0.5, 0.5, -0.5, 0.0, 1.0];
         // world space positions of our cubes
-        let cubePositions: [Vector3<f32>; 10] = [
-            Vector3::new( 0.0,  0.0,  0.0),
-            Vector3::new( 2.0,  5.0, -15.0),
-            Vector3::new(-1.5, -2.2, -2.5),
-            Vector3::new(-3.8, -2.0, -12.3),
-            Vector3::new( 2.4, -0.4, -3.5),
-            Vector3::new(-1.7,  3.0, -7.5),
-            Vector3::new( 1.3, -2.0, -2.5),
-            Vector3::new( 1.5,  2.0, -2.5),
-            Vector3::new( 1.5,  0.2, -1.5),
-            Vector3::new(-1.3,  1.0, -1.5)
-        ];
+        let cubePositions: [Vector3<f32>; 10] = [Vector3::new(0.0, 0.0, 0.0),
+                                                 Vector3::new(2.0, 5.0, -15.0),
+                                                 Vector3::new(-1.5, -2.2, -2.5),
+                                                 Vector3::new(-3.8, -2.0, -12.3),
+                                                 Vector3::new(2.4, -0.4, -3.5),
+                                                 Vector3::new(-1.7, 3.0, -7.5),
+                                                 Vector3::new(1.3, -2.0, -2.5),
+                                                 Vector3::new(1.5, 2.0, -2.5),
+                                                 Vector3::new(1.5, 0.2, -1.5),
+                                                 Vector3::new(-1.3, 1.0, -1.5)];
         let (mut VBO, mut VAO) = (0, 0);
         gl::GenVertexArrays(1, &mut VAO);
         gl::GenBuffers(1, &mut VBO);
@@ -131,11 +105,10 @@ pub fn main_1_7_2() {
         gl::BindVertexArray(VAO);
 
         gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &vertices[0] as *const f32 as *const c_void,
-            gl::STATIC_DRAW);
+        gl::BufferData(gl::ARRAY_BUFFER,
+                       (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                       &vertices[0] as *const f32 as *const c_void,
+                       gl::STATIC_DRAW);
 
         let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
         // position attribute
@@ -154,7 +127,7 @@ pub fn main_1_7_2() {
         gl::GenTextures(1, &mut texture1);
         gl::BindTexture(gl::TEXTURE_2D, texture1);
         // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);	// set texture wrapping to gl::REPEAT (default wrapping method)
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32); // set texture wrapping to gl::REPEAT (default wrapping method)
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
         // set texture filtering parameters
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
@@ -162,15 +135,22 @@ pub fn main_1_7_2() {
         // load image, create texture and generate mipmaps
         let img = image::open(&Path::new("resources/textures/container.jpg")).expect("Failed to load texture");
         let data = img.raw_pixels();
-        gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32, img.width() as i32, img.height() as i32,
-            0, gl::RGB, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
+        gl::TexImage2D(gl::TEXTURE_2D,
+                       0,
+                       gl::RGB as i32,
+                       img.width() as i32,
+                       img.height() as i32,
+                       0,
+                       gl::RGB,
+                       gl::UNSIGNED_BYTE,
+                       &data[0] as *const u8 as *const c_void);
         gl::GenerateMipmap(gl::TEXTURE_2D);
         // texture 2
         // ---------
         gl::GenTextures(1, &mut texture2);
         gl::BindTexture(gl::TEXTURE_2D, texture2);
         // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);	// set texture wrapping to gl::REPEAT (default wrapping method)
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32); // set texture wrapping to gl::REPEAT (default wrapping method)
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
         // set texture filtering parameters
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
@@ -180,8 +160,15 @@ pub fn main_1_7_2() {
         let img = img.flipv(); // flip loaded texture on the y-axis.
         let data = img.raw_pixels();
         // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-        gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as i32, img.width() as i32, img.height() as i32,
-            0, gl::RGBA, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
+        gl::TexImage2D(gl::TEXTURE_2D,
+                       0,
+                       gl::RGB as i32,
+                       img.width() as i32,
+                       img.height() as i32,
+                       0,
+                       gl::RGBA,
+                       gl::UNSIGNED_BYTE,
+                       &data[0] as *const u8 as *const c_void);
         gl::GenerateMipmap(gl::TEXTURE_2D);
 
         // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
@@ -231,10 +218,7 @@ pub fn main_1_7_2() {
             ourShader.useProgram();
 
             // camera/view transformation
-            let view: Matrix4<f32> = Matrix4::look_at(
-                cameraPos,
-                cameraPos + cameraFront,
-                cameraUp);
+            let view: Matrix4<f32> = Matrix4::look_at(cameraPos, cameraPos + cameraFront, cameraUp);
             ourShader.setMat4(c_str!("view"), &view);
 
             // render boxes
@@ -273,8 +257,8 @@ fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>) {
                 // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }
