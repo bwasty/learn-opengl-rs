@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use std::ffi::{ CString, CStr };
+use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::io::Read;
 use std::ptr;
@@ -8,10 +8,10 @@ use std::str;
 use gl;
 use gl::types::*;
 
-use cgmath::{ Matrix, Matrix4 };
+use cgmath::{Matrix, Matrix4};
 
 pub struct Shader {
-    pub ID: u32
+    pub ID: u32,
 }
 
 /// NOTE: mixture of `shader_s.h` and `shader_m.h` (the latter just contains
@@ -21,14 +21,16 @@ impl Shader {
     pub fn new(vertexPath: &str, fragmentPath: &str) -> Shader {
         let mut shader = Shader { ID: 0 };
         // 1. retrieve the vertex/fragment source code from filesystem
-        let mut vShaderFile = File::open(vertexPath)
-            .expect(&format!("Failed to open {}", vertexPath));
-        let mut fShaderFile = File::open(fragmentPath)
-            .expect(&format!("Failed to open {}", fragmentPath));
+        let mut vShaderFile = File::open(vertexPath).expect(&format!("Failed to open {}", vertexPath));
+        let mut fShaderFile = File::open(fragmentPath).expect(&format!("Failed to open {}", fragmentPath));
         let mut vertexCode = String::new();
         let mut fragmentCode = String::new();
-        vShaderFile.read_to_string(&mut vertexCode).expect("Failed to read vertex shader");
-        fShaderFile.read_to_string(&mut fragmentCode).expect("Failed to read fragment shader");
+        vShaderFile
+            .read_to_string(&mut vertexCode)
+            .expect("Failed to read vertex shader");
+        fShaderFile
+            .read_to_string(&mut fragmentCode)
+            .expect("Failed to read fragment shader");
 
         let vShaderCode = CString::new(vertexCode.as_bytes()).unwrap();
         let fShaderCode = CString::new(fragmentCode.as_bytes()).unwrap();
@@ -96,8 +98,8 @@ impl Shader {
                 gl::GetShaderInfoLog(shader, 1024, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
                 println!("ERROR::SHADER_COMPILATION_ERROR of type: {}\n{}\n \
                           -- --------------------------------------------------- -- ",
-                          type_,
-                          str::from_utf8(&infoLog).unwrap());
+                         type_,
+                         str::from_utf8(&infoLog).unwrap());
             }
 
         } else {
@@ -106,8 +108,8 @@ impl Shader {
                 gl::GetProgramInfoLog(shader, 1024, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
                 println!("ERROR::PROGRAM_LINKING_ERROR of type: {}\n{}\n \
                           -- --------------------------------------------------- -- ",
-                          type_,
-                          str::from_utf8(&infoLog).unwrap());
+                         type_,
+                         str::from_utf8(&infoLog).unwrap());
             }
         }
 

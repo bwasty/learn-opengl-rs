@@ -36,7 +36,7 @@ fn main() {
         "1_7_2" => main_1_7_2(),
         "1_7_3" => main_1_7_3(),
         "1_7_4" => main_1_7_4(),
-        _ =>  println!("Unkown tutorial id")
+        _ => println!("Unkown tutorial id"),
     }
 
 }
