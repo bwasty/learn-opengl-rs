@@ -15,6 +15,8 @@ use std::path::Path;
 use std::ffi::CStr;
 
 use ::shader::Shader;
+use ::camera::Camera;
+use ::camera::Camera_Movement::*;
 
 use image;
 use image::GenericImage;
@@ -26,12 +28,12 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
-// camera
-const cameraFront: Vector3<f32> = Vector3 { x: 0.0, y: 0.0, z: -1.0 };
-const cameraUp:    Vector3<f32> = Vector3 { x: 0.0, y: 1.0, z:  0.0 };
+pub fn main_1_7_4() {
+    let mut camera = Camera { Position: Point3::new(0.0, 0.0, 3.0), ..Camera::default() };
 
-pub fn main_1_7_2() {
-    let mut cameraPos = Point3::new(0.0, 0.0,  3.0);
+    let mut firstMouse = true;
+    let mut lastX: f32 = SCR_WIDTH as f32 / 2.0;
+    let mut lastY: f32 = SCR_HEIGHT as f32 / 2.0;
 
     // timing
     let mut deltaTime: f32; // time between current frame and last frame
@@ -52,6 +54,11 @@ pub fn main_1_7_2() {
 
     window.make_current();
     window.set_framebuffer_size_polling(true);
+    window.set_cursor_pos_polling(true);
+    window.set_scroll_polling(true);
+
+    // tell GLFW to capture our mouse
+    window.set_cursor_mode(glfw::CursorMode::Disabled);
 
     // gl: load all OpenGL function pointers
     // ---------------------------------------
@@ -64,7 +71,7 @@ pub fn main_1_7_2() {
 
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/shaders/7.2.camera.vs", "src/shaders/7.2.camera.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new("src/shaders/7.4.camera.vs", "src/shaders/7.4.camera.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -190,11 +197,6 @@ pub fn main_1_7_2() {
         ourShader.setInt(c_str!("texture1"), 0);
         ourShader.setInt(c_str!("texture2"), 1);
 
-        // pass projection matrix to shader (as projection matrix rarely changes there's no need to do this per frame)
-        // -----------------------------------------------------------------------------------------------------------
-        let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
-        ourShader.setMat4(c_str!("projection"), &projection);
-
         (ourShader, VBO, VAO, texture1, texture2, cubePositions)
     };
 
@@ -209,11 +211,11 @@ pub fn main_1_7_2() {
 
         // events
         // -----
-        process_events(&events);
+        process_events(&events, &mut firstMouse, &mut lastX, &mut lastY, &mut camera);
 
         // input
         // -----
-        processInput(&mut window, deltaTime, &mut cameraPos);
+        processInput(&mut window, deltaTime, &mut camera);
 
         // render
         // ------
@@ -230,11 +232,12 @@ pub fn main_1_7_2() {
             // activate shader
             ourShader.useProgram();
 
+            // pass projection matrix to shader (note that in this case it could change every frame)
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            ourShader.setMat4(c_str!("projection"), &projection);
+
             // camera/view transformation
-            let view: Matrix4<f32> = Matrix4::look_at(
-                cameraPos,
-                cameraPos + cameraFront,
-                cameraUp);
+            let view = camera.GetViewMatrix();
             ourShader.setMat4(c_str!("view"), &view);
 
             // render boxes
@@ -264,38 +267,60 @@ pub fn main_1_7_2() {
     }
 }
 
-#[allow(unknown_lints)]
-#[allow(single_match)]
-fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>) {
+fn process_events(
+    events: &Receiver<(f64, glfw::WindowEvent)>,
+    firstMouse: &mut bool,
+    lastX: &mut f32,
+    lastY: &mut f32,
+    camera: &mut Camera,
+) {
     for (_, event) in glfw::flush_messages(events) {
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
                 // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
-            },
+            }
+            glfw::WindowEvent::CursorPos(xpos, ypos) => {
+                let (xpos, ypos) = (xpos as f32, ypos as f32);
+                if *firstMouse {
+                    *lastX = xpos;
+                    *lastY = ypos;
+                    *firstMouse = false;
+                }
+
+                let xoffset = xpos - *lastX;
+                let yoffset = *lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+                *lastX = xpos;
+                *lastY = ypos;
+
+                camera.ProcessMouseMovement(xoffset, yoffset, true);
+            }
+            glfw::WindowEvent::Scroll(_xoffset, yoffset) => {
+                camera.ProcessMouseScroll(yoffset as f32);
+            }
             _ => {},
         }
     }
 }
 
-fn processInput(window: &mut glfw::Window, deltaTime: f32, cameraPos: &mut Point3<f32>) {
+fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera) {
     if window.get_key(Key::Escape) == Action::Press {
         window.set_should_close(true)
     }
 
-    let cameraSpeed = 2.5 * deltaTime;
     if window.get_key(Key::W) == Action::Press {
-        *cameraPos += cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     }
     if window.get_key(Key::S) == Action::Press {
-        *cameraPos += -(cameraSpeed * cameraFront);
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     }
     if window.get_key(Key::A) == Action::Press {
-        *cameraPos += -(cameraFront.cross(cameraUp).normalize() * cameraSpeed);
+        camera.ProcessKeyboard(LEFT, deltaTime);
     }
     if window.get_key(Key::D) == Action::Press {
-        *cameraPos += cameraFront.cross(cameraUp).normalize() * cameraSpeed;
+        camera.ProcessKeyboard(RIGHT, deltaTime);
     }
 
 }
