@@ -59,6 +59,9 @@ pub fn main_2_1() {
     window.set_cursor_pos_polling(true);
     window.set_scroll_polling(true);
 
+    // tell GLFW to capture our mouse
+    window.set_cursor_mode(glfw::CursorMode::Disabled);
+
     // gl: load all OpenGL function pointers
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);

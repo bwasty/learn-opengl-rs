@@ -24,7 +24,7 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
-pub fn main_2_2_1() {
+pub fn main_2_2_2() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -73,8 +73,8 @@ pub fn main_2_2_1() {
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/2.1.basic_lighting.vs", "src/_2_lighting/2.1.basic_lighting.fs");
-        let lampShader = Shader::new("src/_2_lighting/2.1.lamp.vs", "src/_2_lighting/2.1.lamp.fs");
+        let lightingShader = Shader::new("src/_2_lighting/2.2.basic_lighting.vs", "src/_2_lighting/2.2.basic_lighting.fs");
+        let lampShader = Shader::new("src/_2_lighting/2.2.lamp.vs", "src/_2_lighting/2.2.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -187,6 +187,7 @@ pub fn main_2_2_1() {
             lightingShader.setVec3(c_str!("objectColor"), 1.0, 0.5, 0.31);
             lightingShader.setVec3(c_str!("lightColor"), 1.0, 1.0, 1.0);
             lightingShader.setVector3(c_str!("lightPos"), &lightPos);
+            lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
 
             // view/projection transformations
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
