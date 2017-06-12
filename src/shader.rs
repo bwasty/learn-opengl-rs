@@ -8,7 +8,8 @@ use std::str;
 use gl;
 use gl::types::*;
 
-use cgmath::{Matrix, Matrix4};
+use cgmath::{Matrix, Matrix4, Vector3};
+use cgmath::prelude::*;
 
 pub struct Shader {
     pub ID: u32,
@@ -80,6 +81,10 @@ impl Shader {
     /// ------------------------------------------------------------------------
     pub unsafe fn setFloat(&self, name: &CStr, value: f32) {
         gl::Uniform1f(gl::GetUniformLocation(self.ID, name.as_ptr()), value);
+    }
+    /// ------------------------------------------------------------------------
+    pub unsafe fn setVector3(&self, name: &CStr, value: &Vector3<f32>) {
+        gl::Uniform3fv(gl::GetUniformLocation(self.ID, name.as_ptr()), 1, value.as_ptr());
     }
     /// ------------------------------------------------------------------------
     pub unsafe fn setVec3(&self, name: &CStr, x: f32, y: f32, z: f32) {
