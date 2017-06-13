@@ -16,7 +16,7 @@ use shader::Shader;
 use camera::Camera;
 use camera::Camera_Movement::*;
 
-use cgmath::{Matrix4, vec3, Point3, Deg, perspective};
+use cgmath::{Matrix4, Vector3, vec3, Point3, Deg, perspective};
 use cgmath::prelude::*;
 
 // settings
@@ -24,7 +24,7 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
-pub fn main_2_2_1() {
+pub fn main_2_3_1() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -73,8 +73,8 @@ pub fn main_2_2_1() {
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/shaders/2.1.basic_lighting.vs", "src/_2_lighting/shaders/2.1.basic_lighting.fs");
-        let lampShader = Shader::new("src/_2_lighting/shaders/2.1.lamp.vs", "src/_2_lighting/shaders/2.1.lamp.fs");
+        let lightingShader = Shader::new("src/_2_lighting/shaders/3.1.materials.vs", "src/_2_lighting/shaders/3.1.materials.fs");
+        let lampShader = Shader::new("src/_2_lighting/shaders/3.1.lamp.vs", "src/_2_lighting/shaders/3.1.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -179,14 +179,32 @@ pub fn main_2_2_1() {
         // render
         // ------
         unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+            gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             // be sure to activate shader when setting uniforms/drawing objects
             lightingShader.useProgram();
-            lightingShader.setVec3(c_str!("objectColor"), 1.0, 0.5, 0.31);
-            lightingShader.setVec3(c_str!("lightColor"), 1.0, 1.0, 1.0);
             lightingShader.setVector3(c_str!("lightPos"), &lightPos);
+            lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
+
+            // light properties
+            let time = glfw.get_time() as f32;
+            let lightColor = Vector3 {
+                x: (time * 2.0).sin(),
+                y: (time * 0.7).sin(),
+                z: (time * 0.7).sin(),
+            };
+            let diffuseColor = lightColor * 0.5;
+            let ambientColor = diffuseColor * 0.2;
+            lightingShader.setVector3(c_str!("light.ambient"), &ambientColor);
+            lightingShader.setVector3(c_str!("light.diffuse"), &diffuseColor);
+            lightingShader.setVec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
+
+            // material properties
+            lightingShader.setVec3(c_str!("material.ambient"), 1.0, 0.5, 0.31);
+            lightingShader.setVec3(c_str!("material.diffuse"), 1.0, 0.5, 0.31);
+            lightingShader.setVec3(c_str!("material.specular"), 0.5, 0.5, 0.5); // specular lighting doesn't have full effect on this object's material
+            lightingShader.setFloat(c_str!("material.shininess"), 32.0);
 
             // view/projection transformations
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);

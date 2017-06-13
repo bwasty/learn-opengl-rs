@@ -43,6 +43,7 @@ fn main() {
         // "2_1" => main_2_1(),
         // "2_2_1" => main_2_2_1(),
         "2_2_2" => main_2_2_2(),
+        "2_3_1" => main_2_3_1(),
         _ => println!("Unkown tutorial id"),
     }
 
