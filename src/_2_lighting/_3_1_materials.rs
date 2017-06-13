@@ -184,7 +184,7 @@ pub fn main_2_3_1() {
 
             // be sure to activate shader when setting uniforms/drawing objects
             lightingShader.useProgram();
-            lightingShader.setVector3(c_str!("lightPos"), &lightPos);
+            lightingShader.setVector3(c_str!("light.position"), &lightPos);
             lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
 
             // light properties
@@ -192,7 +192,7 @@ pub fn main_2_3_1() {
             let lightColor = Vector3 {
                 x: (time * 2.0).sin(),
                 y: (time * 0.7).sin(),
-                z: (time * 0.7).sin(),
+                z: (time * 1.3).sin(),
             };
             let diffuseColor = lightColor * 0.5;
             let ambientColor = diffuseColor * 0.2;
