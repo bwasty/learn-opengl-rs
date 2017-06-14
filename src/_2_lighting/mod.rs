@@ -12,3 +12,5 @@
 // pub use self::_4_2_lighting_maps_specular_map::*;
 mod _5_1_light_casters_directional;
 pub use self::_5_1_light_casters_directional::*;
+mod _5_2_light_casters_point;
+pub use self::_5_2_light_casters_point::*;
