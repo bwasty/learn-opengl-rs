@@ -29,7 +29,7 @@ const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
-pub fn main_2_5_1() {
+pub fn main_2_5_2() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -42,6 +42,9 @@ pub fn main_2_5_1() {
     // timing
     let mut deltaTime: f32; // time between current frame and last frame
     let mut lastFrame: f32 = 0.0;
+
+    // lighting
+    let lightPos = vec3(1.2, 1.0, 2.0);
 
     // glfw: initialize and configure
     // ------------------------------
@@ -68,14 +71,15 @@ pub fn main_2_5_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (lightingShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions) = unsafe {
+    let (lightingShader, lampShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/shaders/5.1.light_casters.vs", "src/_2_lighting/shaders/5.1.light_casters.fs");
+        let lightingShader = Shader::new("src/_2_lighting/shaders/5.2.light_casters.vs", "src/_2_lighting/shaders/5.2.light_casters.fs");
+        let lampShader = Shader::new("src/_2_lighting/shaders/5.2.lamp.vs", "src/_2_lighting/shaders/5.2.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -162,7 +166,6 @@ pub fn main_2_5_1() {
         gl::BindVertexArray(lightVAO);
 
         gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
-
         // note that we update the lamp's position attribute's stride to reflect the updated buffer data
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(0);
@@ -178,8 +181,7 @@ pub fn main_2_5_1() {
         lightingShader.setInt(c_str!("material.diffuse"), 0);
         lightingShader.setInt(c_str!("material.specular"), 1);
 
-
-        (lightingShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions)
+        (lightingShader, lampShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions)
     };
 
 
@@ -209,13 +211,17 @@ pub fn main_2_5_1() {
 
             // be sure to activate shader when setting uniforms/drawing objects
             lightingShader.useProgram();
-            lightingShader.setVec3(c_str!("light.direction"), -0.2, -1.0, -0.3);
+            lightingShader.setVector3(c_str!("light.position"), &lightPos);
             lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
 
             // light properties
             lightingShader.setVec3(c_str!("light.ambient"), 0.2, 0.2, 0.2);
             lightingShader.setVec3(c_str!("light.diffuse"), 0.5, 0.5, 0.5);
             lightingShader.setVec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
+            lightingShader.setFloat(c_str!("light.constant"), 1.0);
+            lightingShader.setFloat(c_str!("light.linear"), 0.09);
+            lightingShader.setFloat(c_str!("light.quadratic"), 0.032);
+
 
             // material properties
             lightingShader.setFloat(c_str!("material.shininess"), 32.0);
@@ -227,7 +233,7 @@ pub fn main_2_5_1() {
             lightingShader.setMat4(c_str!("view"), &view);
 
             // world transformation
-            let model = Matrix4::<f32>::identity();
+            let mut model = Matrix4::<f32>::identity();
             lightingShader.setMat4(c_str!("model"), &model);
 
             // bind diffuse map
@@ -250,7 +256,16 @@ pub fn main_2_5_1() {
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
             }
 
-            // a lamp object is weird when we only have a directional light, don't render the light object
+             // also draw the lamp object
+            lampShader.useProgram();
+            lampShader.setMat4(c_str!("projection"), &projection);
+            lampShader.setMat4(c_str!("view"), &view);
+            model = Matrix4::from_translation(lightPos);
+            model = model * Matrix4::from_scale(0.2);  // a smaller cube
+            lampShader.setMat4(c_str!("model"), &model);
+
+            gl::BindVertexArray(lightVAO);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
