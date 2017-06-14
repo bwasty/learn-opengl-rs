@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![allow(non_snake_case)]
 extern crate glfw;
 use self::glfw::{Context, Key, Action};
 
@@ -9,16 +10,19 @@ use std::sync::mpsc::Receiver;
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
-use std::path::Path;
 use std::ffi::CStr;
+use std::path::Path;
 
 use shader::Shader;
+use camera::Camera;
+use camera::Camera_Movement::*;
+
+use cgmath::{Matrix4, Vector3, vec3, Point3, Deg, perspective};
+use cgmath::prelude::*;
 
 use image;
 use image::GenericImage;
-
-use cgmath::{Matrix4, Vector3, Deg, Rad, perspective};
-use cgmath::prelude::*;
+use image::DynamicImage::*;
 
 // settings
 const SCR_WIDTH: u32 = 800;
@@ -26,6 +30,19 @@ const SCR_HEIGHT: u32 = 600;
 
 #[allow(non_snake_case)]
 pub fn main_2_5_1() {
+    let mut camera = Camera {
+        Position: Point3::new(0.0, 0.0, 3.0),
+        ..Camera::default()
+    };
+
+    let mut firstMouse = true;
+    let mut lastX: f32 = SCR_WIDTH as f32 / 2.0;
+    let mut lastY: f32 = SCR_HEIGHT as f32 / 2.0;
+
+    // timing
+    let mut deltaTime: f32; // time between current frame and last frame
+    let mut lastFrame: f32 = 0.0;
+
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -40,83 +57,90 @@ pub fn main_2_5_1() {
         .expect("Failed to create GLFW window");
 
     window.make_current();
-    window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
+    window.set_cursor_pos_polling(true);
+    window.set_scroll_polling(true);
+
+    // tell GLFW to capture our mouse
+    window.set_cursor_mode(glfw::CursorMode::Disabled);
 
     // gl: load all OpenGL function pointers
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (ourShader, VBO, VAO, texture1, texture2, cubePositions) = unsafe {
+    let (lightingShader, lampShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
 
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/shaders/6.3.coordinate_systems.vs", "src/shaders/6.3.coordinate_systems.fs"); // you can name your shader files however you like)
+        let lightingShader = Shader::new("src/_2_lighting/shaders/5.1.light_casters.vs", "src/_2_lighting/shaders/5.1.light_casters.fs");
+        let lampShader = Shader::new("src/_2_lighting/shaders/5.1.lamp.vs", "src/_2_lighting/shaders/5.1.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
-        let vertices: [f32; 180] = [
-             -0.5, -0.5, -0.5,  0.0, 0.0,
-              0.5, -0.5, -0.5,  1.0, 0.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-             -0.5,  0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 0.0,
+        let vertices: [f32; 288] = [
+            // positions       // normals        // texture coords
+            -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,  0.0,  0.0,
+             0.5, -0.5, -0.5,  0.0,  0.0, -1.0,  1.0,  0.0,
+             0.5,  0.5, -0.5,  0.0,  0.0, -1.0,  1.0,  1.0,
+             0.5,  0.5, -0.5,  0.0,  0.0, -1.0,  1.0,  1.0,
+            -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,  0.0,  1.0,
+            -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,  0.0,  0.0,
 
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 1.0,
-              0.5,  0.5,  0.5,  1.0, 1.0,
-             -0.5,  0.5,  0.5,  0.0, 1.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
+            -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,  0.0,  0.0,
+             0.5, -0.5,  0.5,  0.0,  0.0,  1.0,  1.0,  0.0,
+             0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  1.0,  1.0,
+             0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  1.0,  1.0,
+            -0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  0.0,  1.0,
+            -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,  0.0,  0.0,
 
-             -0.5,  0.5,  0.5,  1.0, 0.0,
-             -0.5,  0.5, -0.5,  1.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-             -0.5,  0.5,  0.5,  1.0, 0.0,
+            -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,  1.0,  0.0,
+            -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,  1.0,  1.0,
+            -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,  0.0,  1.0,
+            -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,  0.0,  1.0,
+            -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,  0.0,  0.0,
+            -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,  1.0,  0.0,
 
-              0.5,  0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5,  0.5,  0.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
+             0.5,  0.5,  0.5,  1.0,  0.0,  0.0,  1.0,  0.0,
+             0.5,  0.5, -0.5,  1.0,  0.0,  0.0,  1.0,  1.0,
+             0.5, -0.5, -0.5,  1.0,  0.0,  0.0,  0.0,  1.0,
+             0.5, -0.5, -0.5,  1.0,  0.0,  0.0,  0.0,  1.0,
+             0.5, -0.5,  0.5,  1.0,  0.0,  0.0,  0.0,  0.0,
+             0.5,  0.5,  0.5,  1.0,  0.0,  0.0,  1.0,  0.0,
 
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5, -0.5,  1.0, 1.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
+            -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,  0.0,  1.0,
+             0.5, -0.5, -0.5,  0.0, -1.0,  0.0,  1.0,  1.0,
+             0.5, -0.5,  0.5,  0.0, -1.0,  0.0,  1.0,  0.0,
+             0.5, -0.5,  0.5,  0.0, -1.0,  0.0,  1.0,  0.0,
+            -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,  0.0,  0.0,
+            -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,  0.0,  1.0,
 
-             -0.5,  0.5, -0.5,  0.0, 1.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-             -0.5,  0.5,  0.5,  0.0, 0.0,
-             -0.5,  0.5, -0.5,  0.0, 1.0
+            -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,  0.0,  1.0,
+             0.5,  0.5, -0.5,  0.0,  1.0,  0.0,  1.0,  1.0,
+             0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  1.0,  0.0,
+             0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  1.0,  0.0,
+            -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  0.0,  0.0,
+            -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,  0.0,  1.0
         ];
-        // world space positions of our cubes
-        let cubePositions: [Vector3<f32>; 10] = [Vector3::new(0.0, 0.0, 0.0),
-                                                 Vector3::new(2.0, 5.0, -15.0),
-                                                 Vector3::new(-1.5, -2.2, -2.5),
-                                                 Vector3::new(-3.8, -2.0, -12.3),
-                                                 Vector3::new(2.4, -0.4, -3.5),
-                                                 Vector3::new(-1.7, 3.0, -7.5),
-                                                 Vector3::new(1.3, -2.0, -2.5),
-                                                 Vector3::new(1.5, 2.0, -2.5),
-                                                 Vector3::new(1.5, 0.2, -1.5),
-                                                 Vector3::new(-1.3, 1.0, -1.5)];
-        let (mut VBO, mut VAO) = (0, 0);
-        gl::GenVertexArrays(1, &mut VAO);
+        // positions all containers
+        let cubePositions: [Vector3<f32>; 10] = [
+            vec3( 0.0,  0.0,  0.0),
+            vec3( 2.0,  5.0, -15.0),
+            vec3(-1.5, -2.2, -2.5),
+            vec3(-3.8, -2.0, -12.3),
+            vec3( 2.4, -0.4, -3.5),
+            vec3(-1.7,  3.0, -7.5),
+            vec3( 1.3, -2.0, -2.5),
+            vec3( 1.5,  2.0, -2.5),
+            vec3( 1.5,  0.2, -1.5),
+            vec3(-1.3,  1.0, -1.5)
+        ];
+        // first, configure the cube's VAO (and VBO)
+        let (mut VBO, mut cubeVAO) = (0, 0);
+        gl::GenVertexArrays(1, &mut cubeVAO);
         gl::GenBuffers(1, &mut VBO);
-
-        gl::BindVertexArray(VAO);
 
         gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
         gl::BufferData(gl::ARRAY_BUFFER,
@@ -124,124 +148,110 @@ pub fn main_2_5_1() {
                        &vertices[0] as *const f32 as *const c_void,
                        gl::STATIC_DRAW);
 
-        let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
-        // position attribute
+        gl::BindVertexArray(cubeVAO);
+        let stride = 8 * mem::size_of::<GLfloat>() as GLsizei;
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(0);
-        // texture coord attribute
-        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         gl::EnableVertexAttribArray(1);
+        gl::VertexAttribPointer(2, 2, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(2);
+
+        // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
+        let mut lightVAO = 0;
+        gl::GenVertexArrays(1, &mut lightVAO);
+        gl::BindVertexArray(lightVAO);
+
+        gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
+
+        // note that we update the lamp's position attribute's stride to reflect the updated buffer data
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        gl::EnableVertexAttribArray(0);
+
+        // load textures (we now use a utility function to keep the code more organized)
+        // -----------------------------------------------------------------------------
+        let diffuseMap = loadTexture("resources/textures/container2.png");
+        let specularMap = loadTexture("resources/textures/container2_specular.png");
+
+        // shader configuration
+        // --------------------
+        lightingShader.useProgram();
+        lightingShader.setInt(c_str!("material.diffuse"), 0);
+        lightingShader.setInt(c_str!("material.specular"), 1);
 
 
-        // load and create a texture
-        // -------------------------
-        let (mut texture1, mut texture2) = (0, 0);
-        // texture 1
-        // ---------
-        gl::GenTextures(1, &mut texture1);
-        gl::BindTexture(gl::TEXTURE_2D, texture1);
-        // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32); // set texture wrapping to gl::REPEAT (default wrapping method)
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-        // set texture filtering parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        // load image, create texture and generate mipmaps
-        let img = image::open(&Path::new("resources/textures/container.jpg")).expect("Failed to load texture");
-        let data = img.raw_pixels();
-        gl::TexImage2D(gl::TEXTURE_2D,
-                       0,
-                       gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
-                       0,
-                       gl::RGB,
-                       gl::UNSIGNED_BYTE,
-                       &data[0] as *const u8 as *const c_void);
-        gl::GenerateMipmap(gl::TEXTURE_2D);
-        // texture 2
-        // ---------
-        gl::GenTextures(1, &mut texture2);
-        gl::BindTexture(gl::TEXTURE_2D, texture2);
-        // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32); // set texture wrapping to gl::REPEAT (default wrapping method)
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-        // set texture filtering parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        // load image, create texture and generate mipmaps
-        let img = image::open(&Path::new("resources/textures/awesomeface.png")).expect("Failed to load texture");
-        let img = img.flipv(); // flip loaded texture on the y-axis.
-        let data = img.raw_pixels();
-        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-        gl::TexImage2D(gl::TEXTURE_2D,
-                       0,
-                       gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
-                       0,
-                       gl::RGBA,
-                       gl::UNSIGNED_BYTE,
-                       &data[0] as *const u8 as *const c_void);
-        gl::GenerateMipmap(gl::TEXTURE_2D);
-
-        // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-        // -------------------------------------------------------------------------------------------
-        ourShader.useProgram();
-        ourShader.setInt(c_str!("texture1"), 0);
-        ourShader.setInt(c_str!("texture2"), 1);
-
-        (ourShader, VBO, VAO, texture1, texture2, cubePositions)
+        (lightingShader, lampShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions)
     };
+
 
     // render loop
     // -----------
     while !window.should_close() {
+        // per-frame time logic
+        // --------------------
+        let currentFrame = glfw.get_time() as f32;
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // events
         // -----
-        process_events(&mut window, &events);
+        process_events(&events, &mut firstMouse, &mut lastX, &mut lastY, &mut camera);
+
+        // input
+        // -----
+        processInput(&mut window, deltaTime, &mut camera);
+
 
         // render
         // ------
         unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+            gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // bind textures on corresponding texture units
+            // be sure to activate shader when setting uniforms/drawing objects
+            lightingShader.useProgram();
+            lightingShader.setVec3(c_str!("light.direction"), -0.2, -1.0, -0.3);
+            lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
+
+            // light properties
+            lightingShader.setVec3(c_str!("light.ambient"), 0.2, 0.2, 0.2);
+            lightingShader.setVec3(c_str!("light.diffuse"), 0.5, 0.5, 0.5);
+            lightingShader.setVec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
+
+            // material properties
+            lightingShader.setFloat(c_str!("material.shininess"), 32.0);
+
+            // view/projection transformations
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let view = camera.GetViewMatrix();
+            lightingShader.setMat4(c_str!("projection"), &projection);
+            lightingShader.setMat4(c_str!("view"), &view);
+
+            // world transformation
+            let model = Matrix4::<f32>::identity();
+            lightingShader.setMat4(c_str!("model"), &model);
+
+            // bind diffuse map
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, texture1);
+            gl::BindTexture(gl::TEXTURE_2D, diffuseMap);
+            // bind specular map
             gl::ActiveTexture(gl::TEXTURE1);
-            gl::BindTexture(gl::TEXTURE_2D, texture2);
+            gl::BindTexture(gl::TEXTURE_2D, specularMap);
 
-            // activate shader
-            ourShader.useProgram();
-
-            // create transformations
-            // NOTE: cgmath requires axis vectors to be normalized!
-            let model: Matrix4<f32> = Matrix4::from_axis_angle(Vector3::new(0.5, 1.0, 0.0).normalize(),
-                                                               Rad(glfw.get_time() as f32));
-            let view: Matrix4<f32> = Matrix4::from_translation(Vector3::new(0., 0., -3.));
-            let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
-            // retrieve the matrix uniform locations
-            let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
-            let viewLoc = gl::GetUniformLocation(ourShader.ID, c_str!("view").as_ptr());
-            // pass them to the shaders (3 different ways)
-            gl::UniformMatrix4fv(modelLoc, 1, gl::FALSE, model.as_ptr());
-            gl::UniformMatrix4fv(viewLoc, 1, gl::FALSE, &view[0][0]);
-            // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-            ourShader.setMat4(c_str!("projection"), &projection);
-
-            // render boxes
-            gl::BindVertexArray(VAO);
+            // render containers
+            gl::BindVertexArray(cubeVAO);
             for (i, position) in cubePositions.iter().enumerate() {
                 // calculate the model matrix for each object and pass it to shader before drawing
                 let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
                 let angle = 20.0 * i as f32;
+                // don't forget to normalize the axis!
                 model = model * Matrix4::from_axis_angle(Vector3::new(1.0, 0.3, 0.5).normalize(), Deg(angle));
-                ourShader.setMat4(c_str!("model"), &model);
+                lightingShader.setMat4(c_str!("model"), &model);
 
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
             }
+
+            // a lamp object is weird when we only have a directional light, don't render the light object
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -253,12 +263,17 @@ pub fn main_2_5_1() {
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     unsafe {
-        gl::DeleteVertexArrays(1, &VAO);
+        gl::DeleteVertexArrays(1, &cubeVAO);
+        gl::DeleteVertexArrays(1, &lightVAO);
         gl::DeleteBuffers(1, &VBO);
     }
 }
 
-fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
+fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>,
+                  firstMouse: &mut bool,
+                  lastX: &mut f32,
+                  lastY: &mut f32,
+                  camera: &mut Camera) {
     for (_, event) in glfw::flush_messages(events) {
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
@@ -266,8 +281,73 @@ fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::Windo
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
             }
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
+            glfw::WindowEvent::CursorPos(xpos, ypos) => {
+                let (xpos, ypos) = (xpos as f32, ypos as f32);
+                if *firstMouse {
+                    *lastX = xpos;
+                    *lastY = ypos;
+                    *firstMouse = false;
+                }
+
+                let xoffset = xpos - *lastX;
+                let yoffset = *lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+                *lastX = xpos;
+                *lastY = ypos;
+
+                camera.ProcessMouseMovement(xoffset, yoffset, true);
+            }
+            glfw::WindowEvent::Scroll(_xoffset, yoffset) => {
+                camera.ProcessMouseScroll(yoffset as f32);
+            }
             _ => {}
         }
     }
+}
+
+fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera) {
+    if window.get_key(Key::Escape) == Action::Press {
+        window.set_should_close(true)
+    }
+
+    if window.get_key(Key::W) == Action::Press {
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+    if window.get_key(Key::S) == Action::Press {
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+    if window.get_key(Key::A) == Action::Press {
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    }
+    if window.get_key(Key::D) == Action::Press {
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
+
+}
+
+unsafe fn loadTexture(path: &str) -> u32 {
+    let mut textureID = 0;
+
+    gl::GenTextures(1, &mut textureID);
+    let img = image::open(&Path::new(path)).expect("Texture failed to load");
+    let format = match img {
+        ImageLuma8(_) => gl::RED,
+        ImageLumaA8(_) => gl::RG,
+        ImageRgb8(_) => gl::RGB,
+        ImageRgba8(_) => gl::RGBA,
+    };
+
+    let data = img.raw_pixels();
+
+    gl::BindTexture(gl::TEXTURE_2D, textureID);
+    gl::TexImage2D(gl::TEXTURE_2D, 0, format as i32, img.width() as i32, img.height() as i32,
+        0, format, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
+    gl::GenerateMipmap(gl::TEXTURE_2D);
+
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+    textureID
 }
