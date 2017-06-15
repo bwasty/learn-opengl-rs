@@ -14,5 +14,7 @@
 // pub use self::_5_1_light_casters_directional::*;
 // mod _5_2_light_casters_point;
 // pub use self::_5_2_light_casters_point::*;
-mod _5_3_light_casters_spot;
-pub use self::_5_3_light_casters_spot::*;
+// mod _5_3_light_casters_spot;
+// pub use self::_5_3_light_casters_spot::*;
+mod _5_4_light_casters_spot_soft;
+pub use self::_5_4_light_casters_spot_soft::*;
