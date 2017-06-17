@@ -50,7 +50,7 @@ pub fn main_1_5_1() {
     let (ourShader, VBO, VAO, EBO, texture1, texture2) = unsafe {
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/shaders/5.1.transform.vs", "src/shaders/5.1.transform.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new("src/_1_getting_started/shaders/5.1.transform.vs", "src/_1_getting_started/shaders/5.1.transform.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
