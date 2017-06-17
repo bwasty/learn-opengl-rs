@@ -249,7 +249,7 @@ pub fn main_2_5_3() {
                 let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
                 let angle = 20.0 * i as f32;
                 // don't forget to normalize the axis!
-                model = model * Matrix4::from_axis_angle(Vector3::new(1.0, 0.3, 0.5).normalize(), Deg(angle));
+                model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
                 lightingShader.setMat4(c_str!("model"), &model);
 
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
