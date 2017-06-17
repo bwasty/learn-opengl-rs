@@ -74,7 +74,7 @@ pub fn main_1_7_4() {
 
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/shaders/7.4.camera.vs", "src/shaders/7.4.camera.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new("src/_1_getting_started/shaders/7.4.camera.vs", "src/_1_getting_started/shaders/7.4.camera.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

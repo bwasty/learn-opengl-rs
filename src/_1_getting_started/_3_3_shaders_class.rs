@@ -40,7 +40,7 @@ pub fn main_1_3_3() {
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     let (ourShader, VAO) = unsafe {
-        let ourShader = Shader::new("src/shaders/3.3.shader.vs", "src/shaders/3.3.shader.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new("src/_1_getting_started/shaders/3.3.shader.vs", "src/_1_getting_started/shaders/3.3.shader.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
