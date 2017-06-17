@@ -5,28 +5,27 @@ You should be able to follow the tutorials on https://learnopengl.com/ with this
 > This also means it's not necessarily the most idiomatic Rust code. For example, some standard naming conventions lints are disabled and all OpenGL calls are "raw" and wrapped in `unsafe` blocks.
 
 Run individual tutorials like this:
-`cargo run 1_1_2` (for `/src/_1_getting_started/_1_2_hello_window_clear.rs`)
+`cargo run 1_3_2` (for `/src/_1_getting_started/_3_2_shaders_interpolation.rs`)
 
-### Ported so far
-| Original | Port |
-| --- | --- |
-|`1.getting_started/1.1.hello_window/` | See 1.2 (same with just 2 code lines more) |
-| `1.getting_started/1.2.hello_window_clear/` | `_1_getting_started/_1_2_hello_window_clear.rs` |
-| `1.getting_started/2.1.hello_triangle/` | `_1_getting_started/_2_1_hello_triangle.rs` |
-| `1.getting_started/2.2.hello_triangle_indexed/` | `_1_getting_started/_2_2_hello_triangle_indexed.rs` |
-| `1.getting_started/2.3.hello_triangle_exercise1/` | `_1_getting_started/_2_3_hello_triangle_exercise1.rs` |
-| `1.getting_started/2.4.hello_triangle_exercise2/` | `_1_getting_started/_2_4_hello_triangle_exercise2.rs` |
-| `1.getting_started/2.5.hello_triangle_exercise3/` | `_1_getting_started/_2_5_hello_triangle_exercise3.rs` |
-| `1.getting_started/3.1.shaders_uniform/` | `_1_getting_started/_3_1_shaders_uniform.rs` |
-| `1.getting_started/3.2.shaders_interpolation/` | `_1_getting_started/_3_2_shaders_interpolation.rs` |
-| `1.getting_started/3.3.shaders_class/` | `_1_getting_started/_3_3_shaders_class.rs` <br> `shaders.rs`
-| `1.getting_started/4.1.textures/` | `_1_getting_started/_4_1_textures.rs`
-| `1.getting_started/4.2.textures_combined/` | `_1_getting_started/_4_2_textures_combined.rs`
-| `1.getting_started/5.1.transforms/` | `_1_getting_started/_5_1_transform.rs`
-| `1.getting_started/6.1.coordinate_systems/` | `_1_getting_started/_6_1_coordinate_systems.rs`
-| `1.getting_started/6.2.coordinate_systems_depth/` | `_1_getting_started/_6_2_coordinate_systems_depth.rs`
-| `1.getting_started/6.3.coordinate_systems_multiple/` | `_1_getting_started/_6_3_coordinate_systems_multiple.rs`
-| `1.getting_started/7.1.camera_circle/` | `_1_getting_started/_7_1_camera_circle.rs`
-| `1.getting_started/7.2.camera_keyboard_dt/` | `_1_getting_started/_7_2_camera_keyboard_dt.rs`
-| `1.getting_started/7.3.camera_mouse_zoom/` | `_1_getting_started/_7_3_camera_mouse_zoom.rs`
-| `1.getting_started/7.3.camera_class/` | `_1_getting_started/_7_3_camera_class.rs` <br> `camera.rs`
+## Chapters
+### [1. Getting started](src/_1_getting_started)
+* status: complete*
+* Notes:
+    - You can mostly ignore the setup instructions at [Getting-started/Creating-a-window](https://learnopengl.com/#!Getting-started/Creating-a-window). Just create a new project with `cargo` and copy the dependencies section from [Cargo.toml](Cargo.toml). Only `glfw-rs` might need some more setup, see [here](https://github.com/PistonDevelopers/glfw-rs#using-glfw-rs) for details. You can also use [glutin](https://github.com/tomaka/glutin) (a pure Rust alternative to GLFW), but the API is a bit different, so following the tutorials might not be as straight-forward.
+    - You might be tempted to use [glium](https://github.com/glium/glium) instead of raw OpenGL. I'd recommend against that, at least in the beginning, to get a good understanding of how OpenGL really works. Also, glium is not actively maintained at the moment.
+
+### [2. Lighting](src/_2_lighting)
+* status: complete*
+
+### 3. Model loading (TODO)
+### 4. Advanced OpenGL (TODO)
+### 5. Advanced Lighting (TODO)
+### 6. PBR (TODO)
+### 7. In Practice (TODO)
+
+----
+\* exercises mostly omitted. You can look up the solutions in the original C++ source.
+
+----
+#### A note about the code organization
+Originally each tutorial was a separate executable (using `src/bin` and `cargo run --bin <name>`. This didn't play very well with the `RLS` and `clippy` (-> rust-lang-nursery/rls#132). Now all are integrated into the main binary, which leads to long compile times. A workaround for this is to comment out all tutorials except the one you're working on in `main.rs` and the respective `mod.rs` of the chapter.
