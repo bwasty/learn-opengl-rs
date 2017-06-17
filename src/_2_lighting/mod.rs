@@ -18,3 +18,5 @@
 // pub use self::_5_3_light_casters_spot::*;
 mod _5_4_light_casters_spot_soft;
 pub use self::_5_4_light_casters_spot_soft::*;
+mod _6_multiple_lights;
+pub use self::_6_multiple_lights::*;
