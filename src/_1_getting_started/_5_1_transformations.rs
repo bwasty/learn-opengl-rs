@@ -17,7 +17,7 @@ use shader::Shader;
 use image;
 use image::GenericImage;
 
-use cgmath::{Matrix4, Vector3, Rad};
+use cgmath::{Matrix4, vec3,  Rad};
 use cgmath::prelude::*;
 
 // settings
@@ -175,7 +175,7 @@ pub fn main_1_5_1() {
 
             // create transformations
             let mut transform: Matrix4<f32> = Matrix4::identity();
-            transform = transform * Matrix4::<f32>::from_translation(Vector3::new(0.5, -0.5, 0.0));
+            transform = transform * Matrix4::<f32>::from_translation(vec3(0.5, -0.5, 0.0));
             transform = transform * Matrix4::<f32>::from_angle_z(Rad(glfw.get_time() as f32));
 
             // get matrix's uniform location and set matrix

@@ -19,7 +19,7 @@ use shader::Shader;
 use image;
 use image::GenericImage;
 
-use cgmath::{Matrix4, Vector3, Deg, perspective, Point3};
+use cgmath::{Matrix4, Vector3, vec3,  Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
@@ -120,16 +120,16 @@ pub fn main_1_7_2() {
              -0.5,  0.5, -0.5,  0.0, 1.0
         ];
         // world space positions of our cubes
-        let cubePositions: [Vector3<f32>; 10] = [Vector3::new(0.0, 0.0, 0.0),
-                                                 Vector3::new(2.0, 5.0, -15.0),
-                                                 Vector3::new(-1.5, -2.2, -2.5),
-                                                 Vector3::new(-3.8, -2.0, -12.3),
-                                                 Vector3::new(2.4, -0.4, -3.5),
-                                                 Vector3::new(-1.7, 3.0, -7.5),
-                                                 Vector3::new(1.3, -2.0, -2.5),
-                                                 Vector3::new(1.5, 2.0, -2.5),
-                                                 Vector3::new(1.5, 0.2, -1.5),
-                                                 Vector3::new(-1.3, 1.0, -1.5)];
+        let cubePositions: [Vector3<f32>; 10] = [vec3(0.0, 0.0, 0.0),
+                                                 vec3(2.0, 5.0, -15.0),
+                                                 vec3(-1.5, -2.2, -2.5),
+                                                 vec3(-3.8, -2.0, -12.3),
+                                                 vec3(2.4, -0.4, -3.5),
+                                                 vec3(-1.7, 3.0, -7.5),
+                                                 vec3(1.3, -2.0, -2.5),
+                                                 vec3(1.5, 2.0, -2.5),
+                                                 vec3(1.5, 0.2, -1.5),
+                                                 vec3(-1.3, 1.0, -1.5)];
         let (mut VBO, mut VAO) = (0, 0);
         gl::GenVertexArrays(1, &mut VAO);
         gl::GenBuffers(1, &mut VBO);
@@ -259,7 +259,7 @@ pub fn main_1_7_2() {
                 // calculate the model matrix for each object and pass it to shader before drawing
                 let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
                 let angle = 20.0 * i as f32;
-                model = model * Matrix4::from_axis_angle(Vector3::new(1.0, 0.3, 0.5).normalize(), Deg(angle));
+                model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
                 ourShader.setMat4(c_str!("model"), &model);
 
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);

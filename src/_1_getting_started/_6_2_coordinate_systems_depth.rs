@@ -17,7 +17,7 @@ use shader::Shader;
 use image;
 use image::GenericImage;
 
-use cgmath::{Matrix4, Vector3, Deg, Rad, perspective};
+use cgmath::{Matrix4, vec3,  Deg, Rad, perspective};
 use cgmath::prelude::*;
 
 // settings
@@ -207,9 +207,9 @@ pub fn main_1_6_2() {
 
             // create transformations
             // NOTE: cgmath requires axis vectors to be normalized!
-            let model: Matrix4<f32> = Matrix4::from_axis_angle(Vector3::new(0.5, 1.0, 0.0).normalize(),
+            let model: Matrix4<f32> = Matrix4::from_axis_angle(vec3(0.5, 1.0, 0.0).normalize(),
                                                                Rad(glfw.get_time() as f32));
-            let view: Matrix4<f32> = Matrix4::from_translation(Vector3::new(0., 0., -3.));
+            let view: Matrix4<f32> = Matrix4::from_translation(vec3(0., 0., -3.));
             let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
             // retrieve the matrix uniform locations
             let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
