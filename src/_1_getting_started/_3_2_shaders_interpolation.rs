@@ -72,8 +72,8 @@ pub fn main_1_3_2() {
         let mut success = gl::FALSE as GLint;
         let mut infoLog = Vec::with_capacity(512);
         gl::GetShaderiv(vertexShader, gl::COMPILE_STATUS, &mut success);
+        infoLog.set_len(512 - 1); // subtract 1 to skip the trailing null character
         if success != gl::TRUE as GLint {
-            infoLog.set_len(512 - 1); // subtract 1 to skip the trailing null character
             gl::GetShaderInfoLog(vertexShader, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
             println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
         }
