@@ -67,15 +67,15 @@ pub fn main_2_6() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (lightingShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions) = unsafe {
+    let (lightingShader, lampShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions, pointLightPositions) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/shaders/5.4.light_casters.vs", "src/_2_lighting/shaders/5.4.light_casters.fs");
-        // let lampShader = Shader::new("src/_2_lighting/shaders/5.4.lamp.vs", "src/_2_lighting/shaders/5.4.lamp.fs");
+        let lightingShader = Shader::new("src/_2_lighting/shaders/6.multiple_lights.vs", "src/_2_lighting/shaders/6.multiple_lights.fs");
+        let lampShader = Shader::new("src/_2_lighting/shaders/6.lamp.vs", "src/_2_lighting/shaders/6.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -136,6 +136,13 @@ pub fn main_2_6() {
             vec3( 1.5,  0.2, -1.5),
             vec3(-1.3,  1.0, -1.5)
         ];
+        // positions of the point lights
+        let pointLightPositions: [Vector3<f32>; 4] = [
+            vec3( 0.7,  0.2,  2.0),
+            vec3( 2.3, -3.3, -4.0),
+            vec3(-4.0,  2.0, -12.0),
+            vec3( 0.0,  0.0, -3.0)
+        ];
         // first, configure the cube's VAO (and VBO)
         let (mut VBO, mut cubeVAO) = (0, 0);
         gl::GenVertexArrays(1, &mut cubeVAO);
@@ -177,7 +184,7 @@ pub fn main_2_6() {
         lightingShader.setInt(c_str!("material.diffuse"), 0);
         lightingShader.setInt(c_str!("material.specular"), 1);
 
-        (lightingShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions)
+        (lightingShader, lampShader, VBO, cubeVAO, lightVAO, diffuseMap, specularMap, cubePositions, pointLightPositions)
     };
 
 
@@ -207,24 +214,62 @@ pub fn main_2_6() {
 
             // be sure to activate shader when setting uniforms/drawing objects
             lightingShader.useProgram();
-            lightingShader.setVector3(c_str!("light.position"), &camera.Position.to_vec());
-            lightingShader.setVector3(c_str!("light.direction"), &camera.Front);
-            lightingShader.setFloat(c_str!("light.cutOff"), 12.5f32.to_radians().cos());
-            lightingShader.setFloat(c_str!("light.outerCutOff"), 17.5f32.to_radians().cos());
             lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
-
-            // light properties
-            lightingShader.setVec3(c_str!("light.ambient"), 0.1, 0.1, 0.1);
-            // we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
-            // each environment and lighting type requires some tweaking to get the best out of your environment.
-            lightingShader.setVec3(c_str!("light.diffuse"), 0.8, 0.8, 0.8);
-            lightingShader.setVec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
-            lightingShader.setFloat(c_str!("light.constant"), 1.0);
-            lightingShader.setFloat(c_str!("light.linear"), 0.09);
-            lightingShader.setFloat(c_str!("light.quadratic"), 0.032);
-
-            // material properties
             lightingShader.setFloat(c_str!("material.shininess"), 32.0);
+            /*
+                Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index
+                the proper PointLight struct in the array to set each uniform variable. This can be done more code-friendly
+                by defining light types as classes and set their values in there, or by using a more efficient uniform approach
+                by using 'Uniform buffer objects', but that is something we'll discuss in the 'Advanced GLSL' tutorial.
+            */
+            // directional light
+            lightingShader.setVec3(c_str!("dirLight.direction"), -0.2, -1.0, -0.3);
+            lightingShader.setVec3(c_str!("dirLight.ambient"), 0.05, 0.05, 0.05);
+            lightingShader.setVec3(c_str!("dirLight.diffuse"), 0.4, 0.4, 0.4);
+            lightingShader.setVec3(c_str!("dirLight.specular"), 0.5, 0.5, 0.5);
+            // point light 1
+            lightingShader.setVector3(c_str!("pointLights[0].position"), &pointLightPositions[0]);
+            lightingShader.setVec3(c_str!("pointLights[0].ambient"), 0.05, 0.05, 0.05);
+            lightingShader.setVec3(c_str!("pointLights[0].diffuse"), 0.8, 0.8, 0.8);
+            lightingShader.setVec3(c_str!("pointLights[0].specular"), 1.0, 1.0, 1.0);
+            lightingShader.setFloat(c_str!("pointLights[0].constant"), 1.0);
+            lightingShader.setFloat(c_str!("pointLights[0].linear"), 0.09);
+            lightingShader.setFloat(c_str!("pointLights[0].quadratic"), 0.032);
+            // point light 2
+            lightingShader.setVector3(c_str!("pointLights[1].position"), &pointLightPositions[1]);
+            lightingShader.setVec3(c_str!("pointLights[1].ambient"), 0.05, 0.05, 0.05);
+            lightingShader.setVec3(c_str!("pointLights[1].diffuse"), 0.8, 0.8, 0.8);
+            lightingShader.setVec3(c_str!("pointLights[1].specular"), 1.0, 1.0, 1.0);
+            lightingShader.setFloat(c_str!("pointLights[1].constant"), 1.0);
+            lightingShader.setFloat(c_str!("pointLights[1].linear"), 0.09);
+            lightingShader.setFloat(c_str!("pointLights[1].quadratic"), 0.032);
+            // point light 3
+            lightingShader.setVector3(c_str!("pointLights[2].position"), &pointLightPositions[2]);
+            lightingShader.setVec3(c_str!("pointLights[2].ambient"), 0.05, 0.05, 0.05);
+            lightingShader.setVec3(c_str!("pointLights[2].diffuse"), 0.8, 0.8, 0.8);
+            lightingShader.setVec3(c_str!("pointLights[2].specular"), 1.0, 1.0, 1.0);
+            lightingShader.setFloat(c_str!("pointLights[2].constant"), 1.0);
+            lightingShader.setFloat(c_str!("pointLights[2].linear"), 0.09);
+            lightingShader.setFloat(c_str!("pointLights[2].quadratic"), 0.032);
+            // point light 4
+            lightingShader.setVector3(c_str!("pointLights[3].position"), &pointLightPositions[3]);
+            lightingShader.setVec3(c_str!("pointLights[3].ambient"), 0.05, 0.05, 0.05);
+            lightingShader.setVec3(c_str!("pointLights[3].diffuse"), 0.8, 0.8, 0.8);
+            lightingShader.setVec3(c_str!("pointLights[3].specular"), 1.0, 1.0, 1.0);
+            lightingShader.setFloat(c_str!("pointLights[3].constant"), 1.0);
+            lightingShader.setFloat(c_str!("pointLights[3].linear"), 0.09);
+            lightingShader.setFloat(c_str!("pointLights[3].quadratic"), 0.032);
+            // spotLight
+            lightingShader.setVector3(c_str!("spotLight.position"), &camera.Position.to_vec());
+            lightingShader.setVector3(c_str!("spotLight.direction"), &camera.Front);
+            lightingShader.setVec3(c_str!("spotLight.ambient"), 0.0, 0.0, 0.0);
+            lightingShader.setVec3(c_str!("spotLight.diffuse"), 1.0, 1.0, 1.0);
+            lightingShader.setVec3(c_str!("spotLight.specular"), 1.0, 1.0, 1.0);
+            lightingShader.setFloat(c_str!("spotLight.constant"), 1.0);
+            lightingShader.setFloat(c_str!("spotLight.linear"), 0.09);
+            lightingShader.setFloat(c_str!("spotLight.quadratic"), 0.032);
+            lightingShader.setFloat(c_str!("spotLight.cutOff"), 12.5f32.to_radians().cos());
+            lightingShader.setFloat(c_str!("spotLight.outerCutOff"), 15.0f32.to_radians().cos());
 
             // view/projection transformations
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
@@ -233,7 +278,7 @@ pub fn main_2_6() {
             lightingShader.setMat4(c_str!("view"), &view);
 
             // world transformation
-            let model = Matrix4::<f32>::identity();
+            let mut model = Matrix4::<f32>::identity();
             lightingShader.setMat4(c_str!("model"), &model);
 
             // bind diffuse map
@@ -256,16 +301,20 @@ pub fn main_2_6() {
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
             }
 
-            // again, a lamp object is weird when we only have a spot light, don't render the light object
-            // lampShader.useProgram();
-            // lampShader.setMat4(c_str!("projection"), &projection);
-            // lampShader.setMat4(c_str!("view"), &view);
-            // model = Matrix4::from_translation(lightPos);
-            // model = model * Matrix4::from_scale(0.2);  // a smaller cube
-            // lampShader.setMat4(c_str!("model"), &model);
+            // also draw the lamp object(s)
+            lampShader.useProgram();
+            lampShader.setMat4(c_str!("projection"), &projection);
+            lampShader.setMat4(c_str!("view"), &view);
 
-            // gl::BindVertexArray(lightVAO);
-            // gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            // we now draw as many light bulbs as we have point lights.
+            gl::BindVertexArray(lightVAO);
+            for position in &pointLightPositions {
+                model = Matrix4::from_translation(*position);
+                model = model * Matrix4::from_scale(0.2); // Make it a smaller cube
+                lampShader.setMat4(c_str!("model"), &model);
+
+                gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            }
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
