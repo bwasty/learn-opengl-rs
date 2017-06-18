@@ -3,7 +3,7 @@ extern crate image;
 extern crate cgmath;
 
 mod shader;
-mod utils;
+mod macros;
 mod camera;
 mod mesh;
 
