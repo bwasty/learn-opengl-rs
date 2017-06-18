@@ -1,11 +1,13 @@
 extern crate gl;
 extern crate image;
 extern crate cgmath;
+extern crate obj;
 
 mod shader;
 mod macros;
 mod camera;
 mod mesh;
+mod model;
 
 // mod _1_getting_started;
 // use _1_getting_started::*;

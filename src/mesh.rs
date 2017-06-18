@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-#![allow(dead_code)] // TODO!! TMP
 
 use std::ffi::CString;
 use std::mem::size_of;
@@ -15,7 +14,7 @@ use shader::Shader;
 // NOTE: Always use repr(C) for structs passed to OpenGL!
 // Otherwise the compiler may reorder the fields
 #[repr(C)]
-struct Vertex {
+pub struct Vertex {
     // position
     Position: Vector3<f32>,
     // normal
@@ -28,13 +27,13 @@ struct Vertex {
     Bitangent: Vector3<f32>,
 }
 
-struct Texture {
+pub struct Texture {
     id: u32,
     type_: String,
     path: String,
 }
 
-struct Mesh {
+pub struct Mesh {
     /*  Mesh Data  */
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
