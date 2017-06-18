@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)] // TODO!! TMP
 
+use std::ffi::CString;
 use std::mem::size_of;
 use std::os::raw::c_void;
 use std::ptr;
@@ -8,6 +9,8 @@ use std::ptr;
 use cgmath::{ Vector3, Vector2 };
 use gl;
 use gl::types::*;
+
+use shader::Shader;
 
 // NOTE: Always use repr(C) for structs passed to OpenGL!
 // Otherwise the compiler may reorder the fields
@@ -53,6 +56,52 @@ impl Mesh {
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         mesh.setupMesh();
         mesh
+    }
+
+    /// render the mesh
+    pub unsafe fn Draw(&self, shader: &Shader) {
+        // bind appropriate textures
+        let mut diffuseNr  = 0;
+        let mut specularNr = 0;
+        let mut normalNr   = 0;
+        let mut heightNr   = 0;
+        for (i, texture) in self.textures.iter().enumerate() {
+            gl::ActiveTexture(gl::TEXTURE0 + i as u32); // active proper texture unit before binding
+            // retrieve texture number (the N in diffuse_textureN)
+            let name = &texture.type_;
+            let number = match name.as_str() {
+                "texture_diffuse" => {
+                    diffuseNr += 1;
+                    diffuseNr
+                },
+                "texture_specular" => {
+                    specularNr += 1;
+                    specularNr
+                }
+                "texture_normal" => {
+                    normalNr += 1;
+                    normalNr
+                }
+                "texture_height" => {
+                    heightNr += 1;
+                    heightNr
+                }
+                _ => panic!("unknown texture type")
+            };
+            // now set the sampler to the correct texture unit
+            let sampler = CString::new(format!("{}{}", name, number)).unwrap();
+            gl::Uniform1i(gl::GetUniformLocation(shader.ID, sampler.as_ptr()), i as i32);
+            // and finally bind the texture
+            gl::BindTexture(gl::TEXTURE_2D, texture.id);
+        }
+
+        // draw mesh
+        gl::BindVertexArray(self.VAO);
+        gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
+        gl::BindVertexArray(0);
+
+        // always good practice to set everything back to defaults once configured.
+        gl::ActiveTexture(gl::TEXTURE0);
     }
 
     unsafe fn setupMesh(&mut self) {
