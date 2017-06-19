@@ -41,9 +41,9 @@ impl Default for Vertex {
 }
 
 pub struct Texture {
-    id: u32,
-    type_: String,
-    path: String,
+    pub id: u32,
+    pub type_: String,
+    pub path: String,
 }
 
 pub struct Mesh {
