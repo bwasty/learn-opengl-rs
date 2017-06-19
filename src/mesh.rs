@@ -6,6 +6,7 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use cgmath::{ Vector3, Vector2 };
+use cgmath::prelude::*;
 use gl;
 use gl::types::*;
 
@@ -16,15 +17,27 @@ use shader::Shader;
 #[repr(C)]
 pub struct Vertex {
     // position
-    Position: Vector3<f32>,
+    pub Position: Vector3<f32>,
     // normal
-    Normal: Vector3<f32>,
+    pub Normal: Vector3<f32>,
     // texCoords
-    TexCoords: Vector2<f32>,
+    pub TexCoords: Vector2<f32>,
     // tangent
-    Tangent: Vector3<f32>,
+    pub Tangent: Vector3<f32>,
     // bitangent
-    Bitangent: Vector3<f32>,
+    pub Bitangent: Vector3<f32>,
+}
+
+impl Default for Vertex {
+    fn default() -> Self {
+        Vertex {
+            Position: Vector3::zero(),
+            Normal: Vector3::zero(),
+            TexCoords: Vector2::zero(),
+            Tangent: Vector3::zero(),
+            Bitangent: Vector3::zero(),
+        }
+    }
 }
 
 pub struct Texture {

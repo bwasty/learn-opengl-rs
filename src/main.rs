@@ -1,7 +1,7 @@
 extern crate gl;
 extern crate image;
 extern crate cgmath;
-extern crate obj;
+extern crate tobj;
 
 mod shader;
 mod macros;

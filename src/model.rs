@@ -1,10 +1,12 @@
+#![allow(non_snake_case)]
 #![allow(dead_code)] // TODO!! TMP
 
 use std::path::Path;
 
-use obj;
+use cgmath::{vec2, vec3};
+use tobj;
 
-use mesh::{ Mesh, Texture };
+use mesh::{ Mesh, Texture, Vertex };
 
 #[derive(Default)]
 pub struct Model {
@@ -26,10 +28,33 @@ impl Model {
     // loads a model from file and stores the resulting meshes in the meshes vector.
     fn loadModel(&mut self, path: &str) {
         let path = Path::new(path);
-        let result = obj::load::<obj::SimplePolygon>(path);
+        let obj = tobj::load_obj(path);
+        // TODO!: better error handling?
+        let (models, materials) = obj.unwrap();
+        for model in models {
+            let mesh = &model.mesh;
+
+            // data to fill
+            let mut vertices: Vec<Vertex> = Vec::new();
+            let indices: Vec<u32> = mesh.indices.clone();
+            let textures: Vec<Texture> = Vec::new();
+
+            let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
+            for i in 0..mesh.positions.len() / 3 {
+                vertices.push(Vertex {
+                    Position:  vec3(p[i*3], p[i*3+1], p[i*3+2]),
+                    Normal:    vec3(n[i*3], n[i*3+1], n[i*3+2]),
+                    TexCoords: vec2(t[i*2], t[i*2+1]),
+                    ..Vertex::default()
+                })
+            }
+        }
+
+
         // retrieve the directory path of the filepath
         self.directory = path.parent().unwrap_or(Path::new("")).to_str().unwrap().into();
 
         // TODO!!!
+
     }
 }
