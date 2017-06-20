@@ -13,6 +13,8 @@ mod model;
 // use _1_getting_started::*;
 mod _2_lighting;
 use _2_lighting::*;
+mod _3_model_loading;
+use _3_model_loading::*;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -54,6 +56,8 @@ fn main() {
         // "2_5_3" => main_2_5_3(),
         // "2_5_4" => main_2_5_4(),
         "2_6" => main_2_6(),
+
+        "3_1" => main_3_1(),
         _ => println!("Unkown tutorial id"),
     }
 
