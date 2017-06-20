@@ -11,21 +11,29 @@ use image::GenericImage;
 use tobj;
 
 use mesh::{ Mesh, Texture, Vertex };
+use shader::Shader;
 
 #[derive(Default)]
 pub struct Model {
     /*  Model Data */
-    textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+    // TODO!: implement?
+    // textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     pub meshes: Vec<Mesh>,
     directory: String,
 }
 
 impl Model {
     /// constructor, expects a filepath to a 3D model.
-    pub fn new(path: &str, gamma: bool) -> Model {
+    pub fn new(path: &str) -> Model {
         let mut model = Model::default();
         model.loadModel(path);
         model
+    }
+
+    pub fn Draw(&self, shader: &Shader) {
+        for mesh in &self.meshes {
+            unsafe { mesh.Draw(shader); }
+        }
     }
 
     // loads a model from file and stores the resulting meshes in the meshes vector.
