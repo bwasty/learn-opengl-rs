@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-#![allow(dead_code)] // TODO!! TMP
 
 use std::os::raw::c_void;
 use std::path::Path;
@@ -19,34 +18,36 @@ pub struct Model {
     textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     pub meshes: Vec<Mesh>,
     directory: String,
-    gammaCorrection: bool,
 }
 
 impl Model {
     /// constructor, expects a filepath to a 3D model.
     pub fn new(path: &str, gamma: bool) -> Model {
-        let mut model = Model { gammaCorrection: gamma, ..Model::default() };
+        let mut model = Model::default();
         model.loadModel(path);
         model
     }
 
     // loads a model from file and stores the resulting meshes in the meshes vector.
-    fn loadModel(&mut self, path: &str) -> Mesh {
+    fn loadModel(&mut self, path: &str) {
         let path = Path::new(path);
+
+        // retrieve the directory path of the filepath
+        self.directory = path.parent().unwrap_or(Path::new("")).to_str().unwrap().into();
+
         let obj = tobj::load_obj(path);
-        // TODO!: better error handling?
-        let (models, materials) = obj.unwrap();
+
+        let (models, materials) = obj.unwrap(); // TODO: better error handling?
         for model in models {
             let mesh = &model.mesh;
+            let num_vertices = mesh.positions.len() / 3;
 
             // data to fill
-            // TODO: with_capacity?
-            let mut vertices: Vec<Vertex> = Vec::new();
+            let mut vertices: Vec<Vertex> = Vec::with_capacity(num_vertices);
             let indices: Vec<u32> = mesh.indices.clone();
-            let textures: Vec<Texture> = Vec::new();
 
             let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
-            for i in 0..mesh.positions.len() / 3 {
+            for i in 0..num_vertices {
                 vertices.push(Vertex {
                     Position:  vec3(p[i*3], p[i*3+1], p[i*3+2]),
                     Normal:    vec3(n[i*3], n[i*3+1], n[i*3+2]),
@@ -54,39 +55,37 @@ impl Model {
                     ..Vertex::default()
                 })
             }
+
+            // process material
+            let mut textures = Vec::new();
+            if let Some(material_id) = mesh.material_id {
+                let material = &materials[material_id];
+
+                // 1. diffuse map
+                if !material.diffuse_texture.is_empty() {
+                    let texture = self.loadMaterialTexture(&material.diffuse_texture, "texture_diffuse");
+                    textures.push(texture);
+                }
+                // 2. specular map
+                if !material.specular_texture.is_empty() {
+                    let texture = self.loadMaterialTexture(&material.specular_texture, "texture_specular");
+                    textures.push(texture);
+                }
+                // 3. normal map
+                if !material.normal_texture.is_empty() {
+                    let texture = self.loadMaterialTexture(&material.normal_texture, "texture_normal");
+                    textures.push(texture);
+                }
+                // NOTE: no height maps
+            }
+
+            self.meshes.push(Mesh::new(vertices, indices, textures));
         }
 
-        // retrieve the directory path of the filepath
-        self.directory = path.parent().unwrap_or(Path::new("")).to_str().unwrap().into();
-
-        let mut textures = Vec::new();
-
-        // process materials
-        for material in materials {
-            // 1. diffuse map
-            if !material.diffuse_texture.is_empty() {
-                let texture = self.loadMaterialTexture(&material.diffuse_texture, "texture_diffuse");
-                textures.push(texture);
-            }
-            // 2. specular map
-            if !material.specular_texture.is_empty() {
-                let texture = self.loadMaterialTexture(&material.specular_texture, "texture_specular");
-                textures.push(texture);
-            }
-            // 3. normal map
-            if !material.normal_texture.is_empty() {
-                let texture = self.loadMaterialTexture(&material.normal_texture, "texture_normal");
-                textures.push(texture);
-            }
-            // NOTE: no height maps
-        }
-
-        // TODO!!!
-        Mesh { vertices, indices, textures }
     }
 
     fn loadMaterialTexture(&self, path: &str, typeName: &str) -> Texture {
-        // TODO! do skip check...
+        // TODO: do skip check?
         Texture {
             id: unsafe { TextureFromFile(path, &self.directory) },
             type_: typeName.into(),
@@ -101,7 +100,7 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
     let mut textureID = 0;
     gl::GenTextures(1, &mut textureID);
 
-    let img = image::open(&Path::new(path)).expect("Texture failed to load");
+    let img = image::open(&Path::new(&filename)).expect("Texture failed to load");
     let format = match img {
         ImageLuma8(_) => gl::RED,
         ImageLumaA8(_) => gl::RG,

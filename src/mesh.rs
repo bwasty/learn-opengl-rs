@@ -59,14 +59,14 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub unsafe fn new(vertices: Vec<Vertex>, indices: Vec<u32>, textures: Vec<Texture>) -> Mesh {
+    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, textures: Vec<Texture>) -> Mesh {
         let mut mesh = Mesh {
             vertices, indices, textures,
             VAO: 0, VBO: 0, EBO: 0
         };
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
-        mesh.setupMesh();
+        unsafe { mesh.setupMesh() }
         mesh
     }
 
