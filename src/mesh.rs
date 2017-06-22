@@ -8,12 +8,12 @@ use std::ptr;
 use cgmath::{ Vector3, Vector2 };
 use cgmath::prelude::*;
 use gl;
-use gl::types::*;
 
 use shader::Shader;
 
-// NOTE: Always use repr(C) for structs passed to OpenGL!
-// Otherwise the compiler may reorder the fields
+// NOTE: without repr(C) the compiler may reorder the fields or use different padding/alignment than C
+// Depending on how you pass the data to OpenGL, this may be bad. In this case it's not strictly
+// necessary though because of the offset!() macro used below in setupMesh()
 #[repr(C)]
 pub struct Vertex {
     // position
@@ -128,7 +128,7 @@ impl Mesh {
         // A great thing about structs with repr(C) is that their memory layout is sequential for all its items.
         // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
         // again translates to 3/2 floats which translates to a byte array.
-        let size = (self.vertices.len() * size_of::<GLfloat>()) as isize;
+        let size = (self.vertices.len() * size_of::<Vertex>()) as isize;
         let data = &self.vertices[0] as *const Vertex as *const c_void;
         gl::BufferData(gl::ARRAY_BUFFER, size, data, gl::STATIC_DRAW);
 
@@ -141,7 +141,7 @@ impl Mesh {
         let size = size_of::<Vertex>() as i32;
         // vertex Positions
         gl::EnableVertexAttribArray(0);
-        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, size, ptr::null());
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, size, offset_of!(Vertex, Position) as *const c_void);
         // vertex normals
         gl::EnableVertexAttribArray(1);
         gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, size, offset_of!(Vertex, Normal) as *const c_void);
