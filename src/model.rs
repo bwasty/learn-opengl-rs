@@ -41,7 +41,7 @@ impl Model {
         let path = Path::new(path);
 
         // retrieve the directory path of the filepath
-        self.directory = path.parent().unwrap_or(Path::new("")).to_str().unwrap().into();
+        self.directory = path.parent().unwrap_or_else(|| Path::new("")).to_str().unwrap().into();
 
         let obj = tobj::load_obj(path);
 

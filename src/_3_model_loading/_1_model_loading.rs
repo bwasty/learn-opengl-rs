@@ -65,7 +65,9 @@ pub fn main_3_1() {
 
         // build and compile shaders
         // -------------------------
-        let ourShader = Shader::new("src/_3_model_loading/shaders/1.model_loading.vs", "src/_3_model_loading/shaders/1.model_loading.fs");
+        let ourShader = Shader::new(
+            "src/_3_model_loading/shaders/1.model_loading.vs",
+            "src/_3_model_loading/shaders/1.model_loading.fs");
 
         // load models
         // -----------
