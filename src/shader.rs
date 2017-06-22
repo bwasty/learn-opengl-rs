@@ -17,7 +17,6 @@ pub struct Shader {
 
 /// NOTE: mixture of `shader_s.h` and `shader_m.h` (the latter just contains
 /// a few more setters for uniforms)
-#[allow(dead_code)]
 impl Shader {
     pub fn new(vertexPath: &str, fragmentPath: &str) -> Shader {
         let mut shader = Shader { ID: 0 };
@@ -71,6 +70,7 @@ impl Shader {
 
     /// utility uniform functions
     /// ------------------------------------------------------------------------
+    #[allow(dead_code)]
     pub unsafe fn setBool(&self, name: &CStr, value: bool) {
         gl::Uniform1i(gl::GetUniformLocation(self.ID, name.as_ptr()), value as i32);
     }

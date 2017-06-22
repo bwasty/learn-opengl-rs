@@ -1,7 +1,7 @@
 # learn-opengl-rs
 Rust port of https://github.com/JoeyDeVries/LearnOpenGL
 
-You should be able to follow the tutorials on https://learnopengl.com/ with this - the code structure has been kept similar to the original C++ wherever possible.
+You should be able to follow the tutorials at https://learnopengl.com/ with this - the code structure has been kept similar to the original C++ wherever possible.
 > This also means it's not necessarily the most idiomatic Rust code. For example, some standard naming conventions lints are disabled and all OpenGL calls are "raw" and wrapped in `unsafe` blocks.
 
 Run individual tutorials like this:
@@ -17,7 +17,10 @@ Run individual tutorials like this:
 ### [2. Lighting](src/_2_lighting)
 * status: complete*
 
-### 3. Model loading (TODO)
+### [3. Model loading](src/_3_model_loading)
+* status: complete (some minor issues, see `TODO.md`)
+* Notes
+    - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
 ### 4. Advanced OpenGL (TODO)
 ### 5. Advanced Lighting (TODO)
 ### 6. PBR (TODO)
