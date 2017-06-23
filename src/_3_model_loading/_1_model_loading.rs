@@ -106,7 +106,7 @@ pub fn main_3_1() {
             ourShader.useProgram();
 
             // view/projection transformations
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             let view = camera.GetViewMatrix();
             ourShader.setMat4(c_str!("projection"), &projection);
             ourShader.setMat4(c_str!("view"), &view);

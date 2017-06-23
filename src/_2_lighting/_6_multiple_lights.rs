@@ -272,7 +272,7 @@ pub fn main_2_6() {
             lightingShader.setFloat(c_str!("spotLight.outerCutOff"), 15.0f32.to_radians().cos());
 
             // view/projection transformations
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             let view = camera.GetViewMatrix();
             lightingShader.setMat4(c_str!("projection"), &projection);
             lightingShader.setMat4(c_str!("view"), &view);

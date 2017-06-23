@@ -189,7 +189,7 @@ pub fn main_2_2_2() {
             lightingShader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
 
             // view/projection transformations
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             let view = camera.GetViewMatrix();
             lightingShader.setMat4(c_str!("projection"), &projection);
             lightingShader.setMat4(c_str!("view"), &view);

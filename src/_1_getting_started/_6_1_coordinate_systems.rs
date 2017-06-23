@@ -180,7 +180,7 @@ pub fn main_1_6_1() {
             // create transformations
             let model: Matrix4<f32> = Matrix4::from_angle_x(Deg(-55.));
             let view: Matrix4<f32> = Matrix4::from_translation(vec3(0., 0., -3.));
-            let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             // retrieve the matrix uniform locations
             let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
             let viewLoc = gl::GetUniformLocation(ourShader.ID, c_str!("view").as_ptr());

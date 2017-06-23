@@ -211,7 +211,7 @@ pub fn main_1_7_2() {
 
         // pass projection matrix to shader (as projection matrix rarely changes there's no need to do this per frame)
         // -----------------------------------------------------------------------------------------------------------
-        let projection: Matrix4<f32> = perspective(Deg(45.0), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+        let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
         ourShader.setMat4(c_str!("projection"), &projection);
 
         (ourShader, VBO, VAO, texture1, texture2, cubePositions)

@@ -264,7 +264,7 @@ pub fn main_1_7_3() {
             ourShader.useProgram();
 
             // pass projection matrix to shader (note that in this case it could change every frame)
-            let projection: Matrix4<f32> = perspective(Deg(fov), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let projection: Matrix4<f32> = perspective(Deg(fov), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             ourShader.setMat4(c_str!("projection"), &projection);
 
             // camera/view transformation

@@ -212,7 +212,7 @@ pub fn main_2_4_2() {
             lightingShader.setFloat(c_str!("material.shininess"), 64.0);
 
             // view/projection transformations
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), (SCR_WIDTH / SCR_HEIGHT) as f32, 0.1, 100.0);
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             let view = camera.GetViewMatrix();
             lightingShader.setMat4(c_str!("projection"), &projection);
             lightingShader.setMat4(c_str!("view"), &view);
