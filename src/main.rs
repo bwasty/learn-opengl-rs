@@ -8,6 +8,7 @@ mod macros;
 mod camera;
 mod mesh;
 mod model;
+mod utils;
 
 mod _1_getting_started;
 use _1_getting_started::*;

@@ -45,7 +45,7 @@ impl Model {
 
         let obj = tobj::load_obj(path);
 
-        let (models, materials) = obj.unwrap(); // TODO: better error handling?
+        let (models, materials) = obj.unwrap();
         for model in models {
             let mesh = &model.mesh;
             let num_vertices = mesh.positions.len() / 3;
