@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![allow(non_snake_case)]
 extern crate glfw;
 use self::glfw::{Context, Key, Action};
 
@@ -24,6 +25,33 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 800;
 const SCR_HEIGHT: u32 = 600;
 
+unsafe fn glCheckError_(file: &str, line: u32) -> u32 {
+    let mut errorCode = gl::GetError();
+    while errorCode != gl::NO_ERROR {
+        let error = match errorCode {
+            gl::INVALID_ENUM => "INVALID_ENUM",
+            gl::INVALID_VALUE => "INVALID_VALUE",
+            gl::INVALID_OPERATION => "INVALID_OPERATION",
+            gl::STACK_OVERFLOW => "STACK_OVERFLOW",
+            gl::STACK_UNDERFLOW => "STACK_UNDERFLOW",
+            gl::OUT_OF_MEMORY => "OUT_OF_MEMORY",
+            gl::INVALID_FRAMEBUFFER_OPERATION => "INVALID_FRAMEBUFFER_OPERATION",
+            _ => ""
+        };
+
+        println!("{} | {} ({})", error, file, line);
+
+        errorCode = gl::GetError();
+    }
+    errorCode
+}
+
+macro_rules! glCheckError {
+    () => (
+        glCheckError_(file!(), line!())
+    )
+}
+
 #[allow(non_snake_case)]
 pub fn main_7_1() {
     // glfw: initialize and configure
@@ -31,6 +59,7 @@ pub fn main_7_1() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
     glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
+    glfw.window_hint(glfw::WindowHint::OpenGlDebugContext(true)); // comment this line in a release build!
     #[cfg(target_os = "macos")]
     glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
 
@@ -43,100 +72,103 @@ pub fn main_7_1() {
     window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
 
+    // tell GLFW to capture our mouse
+    window.set_cursor_mode(glfw::CursorMode::Disabled);
+
     // gl: load all OpenGL function pointers
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (ourShader, VBO, VAO, texture1, texture2) = unsafe {
+    let (shader, cubeVAO, texture) = unsafe {
+        // enable OpenGL debug context if context allows for debug context
+        let mut flags = 0;
+        gl::GetIntegerv(gl::CONTEXT_FLAGS, &mut flags);
+        if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT == 1 {
+            gl::Enable(gl::DEBUG_OUTPUT);
+            gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS); // makes sure errors are displayed synchronously
+            // TODO!!
+            // gl::DebugMessageCallback(??, ptr::null);
+            gl::DebugMessageControl(gl::DONT_CARE, gl::DONT_CARE, gl::DONT_CARE, 0, ptr::null(), gl::TRUE);
+        }
+
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
+        gl::Enable(gl::CULL_FACE);
 
-        // build and compile our shader program
-        // ------------------------------------
-        let ourShader = Shader::new("src/_7_in_practice/shaders/debugging.vs", "src/_7_in_practice/shaders/debugging.fs");
+        // OpenGL initial state
+        let shader = Shader::new("src/_7_in_practice/shaders/debugging.vs", "src/_7_in_practice/shaders/debugging.fs");
 
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        // ------------------------------------------------------------------
+        // configure 3D cube
+        let (mut cubeVAO, mut cubeVBO) = (0, 0);
         let vertices: [f32; 180] = [
-             -0.5, -0.5, -0.5,  0.0, 0.0,
-              0.5, -0.5, -0.5,  1.0, 0.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-             -0.5,  0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 0.0,
-
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 1.0,
-              0.5,  0.5,  0.5,  1.0, 1.0,
-             -0.5,  0.5,  0.5,  0.0, 1.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-
-             -0.5,  0.5,  0.5,  1.0, 0.0,
-             -0.5,  0.5, -0.5,  1.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-             -0.5,  0.5,  0.5,  1.0, 0.0,
-
-              0.5,  0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5,  0.5,  0.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5, -0.5,  1.0, 1.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-
-             -0.5,  0.5, -0.5,  0.0, 1.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-             -0.5,  0.5,  0.5,  0.0, 0.0,
-             -0.5,  0.5, -0.5,  0.0, 1.0
+            // back face
+            -0.5, -0.5, -0.5,  0.0,  0.0, // Bottom-left
+             0.5,  0.5, -0.5,  1.0,  1.0, // top-right
+             0.5, -0.5, -0.5,  1.0,  0.0, // bottom-right
+             0.5,  0.5, -0.5,  1.0,  1.0, // top-right
+            -0.5, -0.5, -0.5,  0.0,  0.0, // bottom-left
+            -0.5,  0.5, -0.5,  0.0,  1.0, // top-left
+            // front face
+            -0.5, -0.5,  0.5,  0.0,  0.0, // bottom-left
+             0.5, -0.5,  0.5,  1.0,  0.0, // bottom-right
+             0.5,  0.5,  0.5,  1.0,  1.0, // top-right
+             0.5,  0.5,  0.5,  1.0,  1.0, // top-right
+            -0.5,  0.5,  0.5,  0.0,  1.0, // top-left
+            -0.5, -0.5,  0.5,  0.0,  0.0, // bottom-left
+            // left face
+            -0.5,  0.5,  0.5, -1.0,  0.0, // top-right
+            -0.5,  0.5, -0.5, -1.0,  1.0, // top-left
+            -0.5, -0.5, -0.5, -0.0,  1.0, // bottom-left
+            -0.5, -0.5, -0.5, -0.0,  1.0, // bottom-left
+            -0.5, -0.5,  0.5, -0.0,  0.0, // bottom-right
+            -0.5,  0.5,  0.5, -1.0,  0.0, // top-right
+            // right face
+             0.5,  0.5,  0.5,  1.0,  0.0, // top-left
+             0.5, -0.5, -0.5,  0.0,  1.0, // bottom-right
+             0.5,  0.5, -0.5,  1.0,  1.0, // top-right
+             0.5, -0.5, -0.5,  0.0,  1.0, // bottom-right
+             0.5,  0.5,  0.5,  1.0,  0.0, // top-left
+             0.5, -0.5,  0.5,  0.0,  0.0, // bottom-left
+            // bottom face
+            -0.5, -0.5, -0.5,  0.0,  1.0, // top-right
+             0.5, -0.5, -0.5,  1.0,  1.0, // top-left
+             0.5, -0.5,  0.5,  1.0,  0.0, // bottom-left
+             0.5, -0.5,  0.5,  1.0,  0.0, // bottom-left
+            -0.5, -0.5,  0.5,  0.0,  0.0, // bottom-right
+            -0.5, -0.5, -0.5,  0.0,  1.0, // top-right
+            // top face
+            -0.5,  0.5, -0.5,  0.0,  1.0, // top-left
+             0.5,  0.5,  0.5,  1.0,  0.0, // bottom-right
+             0.5,  0.5, -0.5,  1.0,  1.0, // top-right
+             0.5,  0.5,  0.5,  1.0,  0.0, // bottom-right
+            -0.5,  0.5, -0.5,  0.0,  1.0, // top-left
+            -0.5,  0.5,  0.5,  0.0,  0.0  // bottom-left
         ];
-        let (mut VBO, mut VAO) = (0, 0);
-        gl::GenVertexArrays(1, &mut VAO);
-        gl::GenBuffers(1, &mut VBO);
-
-        gl::BindVertexArray(VAO);
-
-        gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
+        gl::GenVertexArrays(1, &mut cubeVAO);
+        gl::GenBuffers(1, &mut cubeVBO);
+        // fill buffer
+        gl::BindBuffer(gl::ARRAY_BUFFER, cubeVBO);
         gl::BufferData(gl::ARRAY_BUFFER,
                        (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                        &vertices[0] as *const f32 as *const c_void,
                        gl::STATIC_DRAW);
-
-        let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
-        // position attribute
-        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        // link vertex attributes
+        gl::BindVertexArray(cubeVAO);
         gl::EnableVertexAttribArray(0);
-        // texture coord attribute
-        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(1);
+        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+        gl::BindVertexArray(0);
+        glCheckError!();
 
-
-        // load and create a texture
-        // -------------------------
-        let (mut texture1, mut texture2) = (0, 0);
-        // texture 1
-        // ---------
-        gl::GenTextures(1, &mut texture1);
-        gl::BindTexture(gl::TEXTURE_2D, texture1);
-        // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32); // set texture wrapping to gl::REPEAT (default wrapping method)
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-        // set texture filtering parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        // load image, create texture and generate mipmaps
-        let img = image::open(&Path::new("resources/textures/container.jpg")).expect("Failed to load texture");
+        // load cube texture
+        let mut texture = 0;
+        gl::GenTextures(1, &mut texture);
+        gl::BindTexture(gl::TEXTURE_2D, texture);
+        let img = image::open(&Path::new("resources/textures/wood.png")).expect("Failed to load texture");
         let data = img.raw_pixels();
         gl::TexImage2D(gl::TEXTURE_2D,
                        0,
@@ -148,39 +180,21 @@ pub fn main_7_1() {
                        gl::UNSIGNED_BYTE,
                        &data[0] as *const u8 as *const c_void);
         gl::GenerateMipmap(gl::TEXTURE_2D);
-        // texture 2
-        // ---------
-        gl::GenTextures(1, &mut texture2);
-        gl::BindTexture(gl::TEXTURE_2D, texture2);
-        // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32); // set texture wrapping to gl::REPEAT (default wrapping method)
+        glCheckError!();
+
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-        // set texture filtering parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        // load image, create texture and generate mipmaps
-        let img = image::open(&Path::new("resources/textures/awesomeface.png")).expect("Failed to load texture");
-        let img = img.flipv(); // flip loaded texture on the y-axis.
-        let data = img.raw_pixels();
-        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-        gl::TexImage2D(gl::TEXTURE_2D,
-                       0,
-                       gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
-                       0,
-                       gl::RGBA,
-                       gl::UNSIGNED_BYTE,
-                       &data[0] as *const u8 as *const c_void);
-        gl::GenerateMipmap(gl::TEXTURE_2D);
+        glCheckError!();
 
-        // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-        // -------------------------------------------------------------------------------------------
-        ourShader.useProgram();
-        ourShader.setInt(c_str!("texture1"), 0);
-        ourShader.setInt(c_str!("texture2"), 1);
+        // set up projection matrix
+        let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
+        shader.setMat4(c_str!("projection"), &projection);
+        shader.setInt(c_str!("tex"), 0);
+        glCheckError!();
 
-        (ourShader, VBO, VAO, texture1, texture2)
+        (shader, cubeVAO, texture)
     };
 
     // render loop
@@ -196,46 +210,25 @@ pub fn main_7_1() {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // bind textures on corresponding texture units
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, texture1);
-            gl::ActiveTexture(gl::TEXTURE1);
-            gl::BindTexture(gl::TEXTURE_2D, texture2);
+            shader.useProgram();
+            let rotationSpeed = 10.0;
+            let angle = glfw.get_time() as f32 * rotationSpeed;
+            let mut model: Matrix4<f32> = Matrix4::from_translation(vec3(0., 0., -2.5));
+            model = model * Matrix4::from_axis_angle(vec3(1.0, 1.0, 1.0).normalize(), Rad(angle));
+            shader.setMat4(c_str!("model"), &model);
 
-            // activate shader
-            ourShader.useProgram();
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+            gl::BindVertexArray(cubeVAO);
+                gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            gl::BindVertexArray(0);
 
-            // create transformations
-            // NOTE: cgmath requires axis vectors to be normalized!
-            let model: Matrix4<f32> = Matrix4::from_axis_angle(vec3(0.5, 1.0, 0.0).normalize(),
-                                                               Rad(glfw.get_time() as f32));
-            let view: Matrix4<f32> = Matrix4::from_translation(vec3(0., 0., -3.));
-            let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
-            // retrieve the matrix uniform locations
-            let modelLoc = gl::GetUniformLocation(ourShader.ID, c_str!("model").as_ptr());
-            let viewLoc = gl::GetUniformLocation(ourShader.ID, c_str!("view").as_ptr());
-            // pass them to the shaders (3 different ways)
-            gl::UniformMatrix4fv(modelLoc, 1, gl::FALSE, model.as_ptr());
-            gl::UniformMatrix4fv(viewLoc, 1, gl::FALSE, &view[0][0]);
-            // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-            ourShader.setMat4(c_str!("projection"), &projection);
-
-            // render container
-            gl::BindVertexArray(VAO);
-            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            glCheckError!();
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         window.swap_buffers();
         glfw.poll_events();
-    }
-
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    unsafe {
-        gl::DeleteVertexArrays(1, &VAO);
-        gl::DeleteBuffers(1, &VBO);
     }
 }
 
