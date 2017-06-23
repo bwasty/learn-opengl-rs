@@ -40,6 +40,7 @@ impl Default for Vertex {
     }
 }
 
+#[derive(Clone)]
 pub struct Texture {
     pub id: u32,
     pub type_: String,

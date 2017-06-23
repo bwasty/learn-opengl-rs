@@ -16,9 +16,8 @@ use shader::Shader;
 #[derive(Default)]
 pub struct Model {
     /*  Model Data */
-    // TODO!: implement?
-    // textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     pub meshes: Vec<Mesh>,
+    textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     directory: String,
 }
 
@@ -42,7 +41,6 @@ impl Model {
 
         // retrieve the directory path of the filepath
         self.directory = path.parent().unwrap_or_else(|| Path::new("")).to_str().unwrap().into();
-
         let obj = tobj::load_obj(path);
 
         let (models, materials) = obj.unwrap();
@@ -92,13 +90,21 @@ impl Model {
 
     }
 
-    fn loadMaterialTexture(&self, path: &str, typeName: &str) -> Texture {
-        // TODO: do skip check?
-        Texture {
+    fn loadMaterialTexture(&mut self, path: &str, typeName: &str) -> Texture {
+        {
+            let texture = self.textures_loaded.iter().find(|t| t.path == path);
+            if let Some(texture) = texture {
+                return texture.clone();
+            }
+        }
+
+        let texture = Texture {
             id: unsafe { TextureFromFile(path, &self.directory) },
             type_: typeName.into(),
             path: path.into()
-        }
+        };
+        self.textures_loaded.push(texture.clone());
+        texture
     }
 }
 

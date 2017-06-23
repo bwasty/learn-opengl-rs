@@ -18,7 +18,7 @@ Run individual tutorials like this:
 * status: complete*
 
 ### [3. Model loading](src/_3_model_loading)
-* status: complete (some minor issues, see `TODO.md`)
+* status: complete
 * Notes
     - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
     - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
