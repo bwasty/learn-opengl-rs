@@ -22,10 +22,13 @@ Run individual tutorials like this:
 * Notes
     - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
     - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
-### 4. Advanced OpenGL (TODO)
-### 5. Advanced Lighting (TODO)
-### 6. PBR (TODO)
-### 7. In Practice (TODO)
+### [7. In Practice](src/_7_in_practice)
+* status: `Debugging` complete (the other two are not in the repo)
+
+### TODO
+### 4. Advanced OpenGL
+### 5. Advanced Lighting
+### 6. PBR
 
 ----
 \* exercises mostly omitted. You can look up the solutions in the original C++ source.

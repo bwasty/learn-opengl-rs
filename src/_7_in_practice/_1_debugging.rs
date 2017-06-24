@@ -52,6 +52,54 @@ macro_rules! glCheckError {
     )
 }
 
+extern "system" fn glDebugOutput(source: gl::types::GLenum,
+                                 type_: gl::types::GLenum,
+                                 id: gl::types::GLuint,
+                                 severity: gl::types::GLenum,
+                                 _length: gl::types::GLsizei,
+                                 message: *const gl::types::GLchar,
+                                 _userParam: *mut c_void)
+{
+    if id == 131169 || id == 131185 || id == 131218 || id == 131204 {
+        // ignore these non-significant error codes
+        return
+    }
+
+    println!("---------------");
+    let message = unsafe { CStr::from_ptr(message).to_str().unwrap() };
+    println!("Debug message ({}): {}", id, message);
+    match source {
+        gl::DEBUG_SOURCE_API =>             println!("Source: API"),
+        gl::DEBUG_SOURCE_WINDOW_SYSTEM =>   println!("Source: Window System"),
+        gl::DEBUG_SOURCE_SHADER_COMPILER => println!("Source: Shader Compiler"),
+        gl::DEBUG_SOURCE_THIRD_PARTY =>     println!("Source: Third Party"),
+        gl::DEBUG_SOURCE_APPLICATION =>     println!("Source: Application"),
+        gl::DEBUG_SOURCE_OTHER =>           println!("Source: Other"),
+        _ =>                                println!("Source: Unknown enum value")
+    }
+
+    match type_ {
+       gl::DEBUG_TYPE_ERROR =>               println!("Type: Error"),
+       gl::DEBUG_TYPE_DEPRECATED_BEHAVIOR => println!("Type: Deprecated Behaviour"),
+       gl::DEBUG_TYPE_UNDEFINED_BEHAVIOR =>  println!("Type: Undefined Behaviour"),
+       gl::DEBUG_TYPE_PORTABILITY =>         println!("Type: Portability"),
+       gl::DEBUG_TYPE_PERFORMANCE =>         println!("Type: Performance"),
+       gl::DEBUG_TYPE_MARKER =>              println!("Type: Marker"),
+       gl::DEBUG_TYPE_PUSH_GROUP =>          println!("Type: Push Group"),
+       gl::DEBUG_TYPE_POP_GROUP =>           println!("Type: Pop Group"),
+       gl::DEBUG_TYPE_OTHER =>               println!("Type: Other"),
+       _ =>                                  println!("Type: Unknown enum value")
+    }
+
+    match severity {
+       gl::DEBUG_SEVERITY_HIGH =>         println!("Severity: high"),
+       gl::DEBUG_SEVERITY_MEDIUM =>       println!("Severity: medium"),
+       gl::DEBUG_SEVERITY_LOW =>          println!("Severity: low"),
+       gl::DEBUG_SEVERITY_NOTIFICATION => println!("Severity: notification"),
+       _ =>                               println!("Severity: Unknown enum value")
+    }
+}
+
 #[allow(non_snake_case)]
 pub fn main_7_1() {
     // glfw: initialize and configure
@@ -83,12 +131,14 @@ pub fn main_7_1() {
         // enable OpenGL debug context if context allows for debug context
         let mut flags = 0;
         gl::GetIntegerv(gl::CONTEXT_FLAGS, &mut flags);
-        if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT == 1 {
+        if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
             gl::Enable(gl::DEBUG_OUTPUT);
             gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS); // makes sure errors are displayed synchronously
-            // TODO!!
-            // gl::DebugMessageCallback(??, ptr::null);
+            gl::DebugMessageCallback(glDebugOutput, ptr::null());
             gl::DebugMessageControl(gl::DONT_CARE, gl::DONT_CARE, gl::DONT_CARE, 0, ptr::null(), gl::TRUE);
+        }
+        else {
+            println!("Debug Context not active! Check if your driver supports the extension.")
         }
 
         // configure global opengl state
@@ -162,7 +212,6 @@ pub fn main_7_1() {
         gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         gl::BindVertexArray(0);
-        glCheckError!();
 
         // load cube texture
         let mut texture = 0;
@@ -180,18 +229,17 @@ pub fn main_7_1() {
                        gl::UNSIGNED_BYTE,
                        &data[0] as *const u8 as *const c_void);
         gl::GenerateMipmap(gl::TEXTURE_2D);
-        glCheckError!();
 
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        glCheckError!();
 
         // set up projection matrix
         let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
         shader.setMat4(c_str!("projection"), &projection);
         shader.setInt(c_str!("tex"), 0);
+
         glCheckError!();
 
         (shader, cubeVAO, texture)
@@ -222,7 +270,6 @@ pub fn main_7_1() {
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
             gl::BindVertexArray(0);
 
-            glCheckError!();
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
