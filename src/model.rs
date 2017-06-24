@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-#![allow(dead_code)]
 
 use std::os::raw::c_void;
 use std::path::Path;

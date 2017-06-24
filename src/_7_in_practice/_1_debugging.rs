@@ -36,7 +36,7 @@ unsafe fn glCheckError_(file: &str, line: u32) -> u32 {
             gl::STACK_UNDERFLOW => "STACK_UNDERFLOW",
             gl::OUT_OF_MEMORY => "OUT_OF_MEMORY",
             gl::INVALID_FRAMEBUFFER_OPERATION => "INVALID_FRAMEBUFFER_OPERATION",
-            _ => ""
+            _ => "unknown GL error code"
         };
 
         println!("{} | {} ({})", error, file, line);

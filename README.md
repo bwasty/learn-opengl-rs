@@ -34,5 +34,5 @@ Run individual tutorials like this:
 \* exercises mostly omitted. You can look up the solutions in the original C++ source.
 
 ----
-#### A note about the code organization
+### A note about the code organization
 Originally each tutorial was a separate executable (using `src/bin` and `cargo run --bin <name>`. This didn't play very well with the `RLS` and `clippy` (-> rust-lang-nursery/rls#132). Now all are integrated into the main binary, which leads to long compile times. A workaround for this is to comment out all tutorials except the one you're working on in `main.rs` and the respective `mod.rs` of the chapter.
