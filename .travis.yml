@@ -1,0 +1,19 @@
+dist: trusty
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+addons:
+  apt:
+    packages:
+      - libxrandr-dev
+      - libxinerama-dev
+      - libxcursor-dev
+      - libxi-dev
+os:
+  - linux
+  - osx
