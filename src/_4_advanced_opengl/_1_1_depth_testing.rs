@@ -24,7 +24,7 @@ use image::GenericImage;
 use image::DynamicImage::*;
 
 
-use cgmath::{Matrix4, Vector3, vec3,  Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
@@ -71,7 +71,7 @@ pub fn main_4_1_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, cubeVBO, cubeVAO, cubeTexture, floorTexture, planeVertices) = unsafe {
+    let (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -179,7 +179,7 @@ pub fn main_4_1_1() {
         shader.useProgram();
         shader.setInt(c_str!("texture1"), 0);
 
-        (shader, cubeVBO, cubeVAO, cubeTexture, floorTexture, planeVertices)
+        (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture)
     };
 
     // render loop
@@ -205,36 +205,25 @@ pub fn main_4_1_1() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // TODO!!! continue here
-
-            // bind textures on corresponding texture units
+            shader.useProgram();
+            let model: Matrix4<f32>;
+            let view = camera.GetViewMatrix();
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
+            shader.setMat4(c_str!("view"), &view);
+            shader.setMat4(c_str!("projection"), &projection);
+            // cubes
+            gl::BindVertexArray(cubeVAO);
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, cubeTexture);
-            gl::ActiveTexture(gl::TEXTURE1);
-            gl::BindTexture(gl::TEXTURE_2D, floorTexture);
-
-            // activate shader
-            shader.useProgram();
-
-            // pass projection matrix to shader (note that in this case it could change every frame)
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
-            shader.setMat4(c_str!("projection"), &projection);
-
-            // camera/view transformation
-            let view = camera.GetViewMatrix();
-            shader.setMat4(c_str!("view"), &view);
-
-            // render boxes
-            gl::BindVertexArray(cubeVAO);
-            // for (i, position) in cubePositions.iter().enumerate() {
-            //     // calculate the model matrix for each object and pass it to shader before drawing
-            //     let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
-            //     let angle = 20.0 * i as f32;
-            //     model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
-            //     shader.setMat4(c_str!("model"), &model);
-
-            //     gl::DrawArrays(gl::TRIANGLES, 0, 36);
-            // }
+            model = Matrix4::from_translation(vec3(-1.0, 0.0, -1.0));
+            shader.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            // floor
+            gl::BindVertexArray(planeVAO);
+            gl::BindBuffer(gl::TEXTURE_2D, floorTexture);
+            shader.setMat4(c_str!("model"), &Matrix4::identity());
+            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            gl::BindVertexArray(0);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -247,7 +236,9 @@ pub fn main_4_1_1() {
     // ------------------------------------------------------------------------
     unsafe {
         gl::DeleteVertexArrays(1, &cubeVAO);
+        gl::DeleteVertexArrays(1, &planeVAO);
         gl::DeleteBuffers(1, &cubeVBO);
+        gl::DeleteBuffers(1, &planeVBO);
     }
 }
 
