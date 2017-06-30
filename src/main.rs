@@ -3,6 +3,7 @@ extern crate image;
 extern crate cgmath;
 extern crate tobj;
 
+mod common;
 mod shader;
 mod macros;
 mod camera;
