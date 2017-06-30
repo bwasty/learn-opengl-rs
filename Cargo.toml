@@ -10,3 +10,17 @@ glfw = "0.15.0"
 image = "0.14.0"
 # only needed from chapter 3 on
 tobj = "0.1.6"
+
+[features]
+default = [
+#    "chapter-1",
+#    "chapter-2",
+#    "chapter-3",
+    "chapter-4",
+#    "chapter-7"
+]
+chapter-1 = []
+chapter-2 = []
+chapter-3 = []
+chapter-4 = []
+chapter-7 = []
