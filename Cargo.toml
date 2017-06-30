@@ -1,7 +1,7 @@
 [package]
 authors = ["Benjamin Wasty <benny.wasty@gmail.com>"]
 name = "learn-opengl-rs"
-version = "0.3.0"
+version = "0.4.0"
 
 [dependencies]
 cgmath = "0.14.1"
@@ -13,11 +13,11 @@ tobj = "0.1.6"
 
 [features]
 default = [
-#    "chapter-1",
-#    "chapter-2",
-#    "chapter-3",
+    "chapter-1",
+    "chapter-2",
+    "chapter-3",
     "chapter-4",
-#    "chapter-7"
+    "chapter-7"
 ]
 chapter-1 = []
 chapter-2 = []

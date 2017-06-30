@@ -29,7 +29,7 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-pub fn main_4_1_1() {
+pub fn main_4_1_2() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -72,11 +72,11 @@ pub fn main_4_1_1() {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
-        gl::DepthFunc(gl::ALWAYS); // always pass the depth test (same effect as glDisable(GL_DEPTH_TEST))
+        // gl::DepthFunc(gl::ALWAYS); // always pass the depth test (same effect as glDisable(GL_DEPTH_TEST))
 
         // build and compile our shader program
         // ------------------------------------
-        let shader = Shader::new("src/_4_advanced_opengl/shaders/1.1.depth_testing.vs", "src/_4_advanced_opengl/shaders/1.1.depth_testing.fs"); // you can name your shader files however you like)
+        let shader = Shader::new("src/_4_advanced_opengl/shaders/1.2.depth_testing.vs", "src/_4_advanced_opengl/shaders/1.2.depth_testing.fs"); // you can name your shader files however you like)
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

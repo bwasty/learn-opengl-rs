@@ -7,7 +7,9 @@ You should be able to follow the tutorials at https://learnopengl.com/ with this
 Run individual tutorials like this:
 `cargo run 1_3_2` (for `/src/_1_getting_started/_3_2_shaders_interpolation.rs`).
 
-For reduced compilation times, you may only compile a the code for a certain chapter, by adding `--features chapter-1` for example.
+For reduced compilation times, you may only compile a the code for a certain chapter, by adding `--no-default-features --features chapter-1` for example.
+
+<img width="290" alt="1_3_2" src="https://user-images.githubusercontent.com/1647415/27755053-d5cd0f5a-5ded-11e7-99b4-abd4e3bb8638.png"><img width="290" alt="2_6" src="https://user-images.githubusercontent.com/1647415/27755102-fd217078-5ded-11e7-96f6-efdeb9ffdcac.png"><img width="290" alt="3_1" src="https://user-images.githubusercontent.com/1647415/27755660-52df4104-5df1-11e7-800c-45a514bf3130.png">
 
 ## Chapters
 ### [1. Getting started](src/_1_getting_started)
@@ -25,7 +27,7 @@ For reduced compilation times, you may only compile a the code for a certain cha
     - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
     - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
-* status: WIP
+* status: `Depth testing` complete
 ### [7. In Practice](src/_7_in_practice)
 * status: `Debugging` complete (the other two are not in the repo)
 
