@@ -197,7 +197,7 @@ pub fn main_4_1_1() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             shader.useProgram();
-            let model: Matrix4<f32>;
+            let mut model: Matrix4<f32>;
             let view = camera.GetViewMatrix();
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
             shader.setMat4(c_str!("view"), &view);
@@ -207,6 +207,9 @@ pub fn main_4_1_1() {
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, cubeTexture);
             model = Matrix4::from_translation(vec3(-1.0, 0.0, -1.0));
+            shader.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            model = Matrix4::from_translation(vec3(2.0, 0.0, 0.0));
             shader.setMat4(c_str!("model"), &model);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
             // floor
