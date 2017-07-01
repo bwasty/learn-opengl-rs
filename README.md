@@ -1,4 +1,4 @@
-# learn-opengl-rs [![Build Status](https://travis-ci.org/bwasty/learn-opengl-rs.svg?branch=master)](https://travis-ci.org/bwasty/learn-opengl-rs)
+# learn-opengl-rs [![Build Status](https://travis-ci.org/bwasty/learn-opengl-rs.svg?branch=master)](https://travis-ci.org/bwasty/learn-opengl-rs) [![](https://tokei.rs/b1/github/bwasty/learn-opengl-rs)](https://github.com/Aaronepower/tokei) [![](https://tokei.rs/b1/github/bwasty/learn-opengl-rs?category=comments)](https://github.com/Aaronepower/tokei)
 Rust port of https://github.com/JoeyDeVries/LearnOpenGL
 
 You should be able to follow the tutorials at https://learnopengl.com/ with this - the code structure has been kept similar to the original C++ wherever possible.
