@@ -16,7 +16,7 @@ use common::{process_events, processInput, loadTexture};
 use shader::Shader;
 use camera::Camera;
 
-use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3, Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
@@ -62,15 +62,23 @@ pub fn main_4_2() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture) = unsafe {
+    let (shader, shaderSingleColor, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
-        gl::DepthFunc(gl::ALWAYS); // always pass the depth test (same effect as glDisable(GL_DEPTH_TEST))
+        gl::DepthFunc(gl::LESS);
+        gl::Enable(gl::STENCIL_TEST);
+        gl::StencilFunc(gl::NOTEQUAL, 1, 0xFF);
+        gl::StencilOp(gl::KEEP, gl::KEEP, gl::REPLACE);
 
         // build and compile our shader program
         // ------------------------------------
-        let shader = Shader::new("src/_4_advanced_opengl/shaders/1.1.depth_testing.vs", "src/_4_advanced_opengl/shaders/1.1.depth_testing.fs"); // you can name your shader files however you like)
+        let shader = Shader::new(
+            "src/_4_advanced_opengl/shaders/2.stencil_testing.vs",
+            "src/_4_advanced_opengl/shaders/2.stencil_testing.fs");
+        let shaderSingleColor = Shader::new(
+            "src/_4_advanced_opengl/shaders/2.stencil_testing.vs",
+            "src/_4_advanced_opengl/shaders/2.stencil_single_color.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -170,7 +178,7 @@ pub fn main_4_2() {
         shader.useProgram();
         shader.setInt(c_str!("texture1"), 0);
 
-        (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture)
+        (shader, shaderSingleColor, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture)
     };
 
     // render loop
@@ -194,14 +202,35 @@ pub fn main_4_2() {
         // ------
         unsafe {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            gl::Clear(
+                gl::COLOR_BUFFER_BIT |
+                gl::DEPTH_BUFFER_BIT |
+                gl::STENCIL_BUFFER_BIT); // don't forget to clear the stencil buffer!
 
-            shader.useProgram();
+            // set uniforms
+            shaderSingleColor.useProgram();
             let mut model: Matrix4<f32>;
             let view = camera.GetViewMatrix();
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
+            shaderSingleColor.setMat4(c_str!("view"), &view);
+            shaderSingleColor.setMat4(c_str!("projection"), &projection);
+
+            shader.useProgram();
             shader.setMat4(c_str!("view"), &view);
             shader.setMat4(c_str!("projection"), &projection);
+
+            // draw floor as normal, but don't write the floor to the stencil buffer, we only care about the containers. We set its mask to 0x00 to not write to the stencil buffer.
+            gl::StencilMask(0x00);
+            // floor
+            gl::BindVertexArray(planeVAO);
+            gl::BindBuffer(gl::TEXTURE_2D, floorTexture);
+            shader.setMat4(c_str!("model"), &Matrix4::identity());
+            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            gl::BindVertexArray(0);
+            // 1st. render pass, draw objects as normal, writing to the stencil buffer
+            // --------------------------------------------------------------------
+            gl::StencilFunc(gl::ALWAYS, 1, 0xFF);
+            gl::StencilMask(0xFF);
             // cubes
             gl::BindVertexArray(cubeVAO);
             gl::ActiveTexture(gl::TEXTURE0);
@@ -212,12 +241,31 @@ pub fn main_4_2() {
             model = Matrix4::from_translation(vec3(2.0, 0.0, 0.0));
             shader.setMat4(c_str!("model"), &model);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
-            // floor
-            gl::BindVertexArray(planeVAO);
-            gl::BindBuffer(gl::TEXTURE_2D, floorTexture);
-            shader.setMat4(c_str!("model"), &Matrix4::identity());
-            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+
+            // 2nd. render pass: now draw slightly scaled versions of the objects, this time disabling stencil writing.
+            // Because the stencil buffer is now filled with several 1s. The parts of the buffer that are 1 are not drawn, thus only drawing
+            // the objects' size differences, making it look like borders.
+            // -----------------------------------------------------------------------------------------------------------------------------
+            gl::StencilFunc(gl::NOTEQUAL, 1, 0xFF);
+            gl::StencilMask(0x00);
+            gl::Disable(gl::DEPTH_TEST);
+            shaderSingleColor.useProgram();
+            let scale = 1.1;
+            // cubes
+            gl::BindVertexArray(cubeVAO);
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, cubeTexture);
+            model = Matrix4::from_translation(vec3(-1.0, 0.0, -1.0));
+            model = model * Matrix4::from_scale(scale);
+            shader.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            model = Matrix4::from_translation(vec3(2.0, 0.0, 0.0));
+            model = model * Matrix4::from_scale(scale);
+            shader.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
             gl::BindVertexArray(0);
+            gl::StencilMask(0xFF);
+            gl::Enable(gl::DEPTH_TEST);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
