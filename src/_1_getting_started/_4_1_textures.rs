@@ -46,7 +46,9 @@ pub fn main_1_4_1() {
     let (ourShader, VBO, VAO, EBO, texture) = unsafe {
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/_1_getting_started/shaders/4.1.texture.vs", "src/_1_getting_started/shaders/4.1.texture.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new(
+            "src/_1_getting_started/shaders/4.1.texture.vs",
+            "src/_1_getting_started/shaders/4.1.texture.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

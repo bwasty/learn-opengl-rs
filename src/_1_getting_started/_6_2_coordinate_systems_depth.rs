@@ -54,7 +54,9 @@ pub fn main_1_6_2() {
 
         // build and compile our shader program
         // ------------------------------------
-        let ourShader = Shader::new("src/_1_getting_started/shaders/6.2.coordinate_systems.vs", "src/_1_getting_started/shaders/6.2.coordinate_systems.fs"); // you can name your shader files however you like)
+        let ourShader = Shader::new(
+            "src/_1_getting_started/shaders/6.2.coordinate_systems.vs",
+            "src/_1_getting_started/shaders/6.2.coordinate_systems.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

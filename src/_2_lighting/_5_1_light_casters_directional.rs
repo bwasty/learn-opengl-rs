@@ -68,7 +68,9 @@ pub fn main_2_5_1() {
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/shaders/5.1.light_casters.vs", "src/_2_lighting/shaders/5.1.light_casters.fs");
+        let lightingShader = Shader::new(
+            "src/_2_lighting/shaders/5.1.light_casters.vs",
+            "src/_2_lighting/shaders/5.1.light_casters.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

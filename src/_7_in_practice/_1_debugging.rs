@@ -147,7 +147,9 @@ pub fn main_7_1() {
         gl::Enable(gl::CULL_FACE);
 
         // OpenGL initial state
-        let shader = Shader::new("src/_7_in_practice/shaders/debugging.vs", "src/_7_in_practice/shaders/debugging.fs");
+        let shader = Shader::new(
+            "src/_7_in_practice/shaders/debugging.vs",
+            "src/_7_in_practice/shaders/debugging.fs");
 
         // configure 3D cube
         let (mut cubeVAO, mut cubeVBO) = (0, 0);
