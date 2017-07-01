@@ -70,7 +70,9 @@ pub fn main_4_1_1() {
 
         // build and compile our shader program
         // ------------------------------------
-        let shader = Shader::new("src/_4_advanced_opengl/shaders/1.1.depth_testing.vs", "src/_4_advanced_opengl/shaders/1.1.depth_testing.fs"); // you can name your shader files however you like)
+        let shader = Shader::new(
+            "src/_4_advanced_opengl/shaders/1.1.depth_testing.vs",
+            "src/_4_advanced_opengl/shaders/1.1.depth_testing.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

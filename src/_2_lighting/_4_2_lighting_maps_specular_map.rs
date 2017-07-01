@@ -71,8 +71,12 @@ pub fn main_2_4_2() {
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/shaders/4.2.lighting_maps.vs", "src/_2_lighting/shaders/4.2.lighting_maps.fs");
-        let lampShader = Shader::new("src/_2_lighting/shaders/4.2.lamp.vs", "src/_2_lighting/shaders/4.2.lamp.fs");
+        let lightingShader = Shader::new(
+            "src/_2_lighting/shaders/4.2.lighting_maps.vs",
+            "src/_2_lighting/shaders/4.2.lighting_maps.fs");
+        let lampShader = Shader::new(
+            "src/_2_lighting/shaders/4.2.lamp.vs",
+            "src/_2_lighting/shaders/4.2.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------

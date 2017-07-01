@@ -68,8 +68,12 @@ pub fn main_2_6() {
 
         // build and compile our shader program
         // ------------------------------------
-        let lightingShader = Shader::new("src/_2_lighting/shaders/6.multiple_lights.vs", "src/_2_lighting/shaders/6.multiple_lights.fs");
-        let lampShader = Shader::new("src/_2_lighting/shaders/6.lamp.vs", "src/_2_lighting/shaders/6.lamp.fs");
+        let lightingShader = Shader::new(
+            "src/_2_lighting/shaders/6.multiple_lights.vs",
+            "src/_2_lighting/shaders/6.multiple_lights.fs");
+        let lampShader = Shader::new(
+            "src/_2_lighting/shaders/6.lamp.vs",
+            "src/_2_lighting/shaders/6.lamp.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
