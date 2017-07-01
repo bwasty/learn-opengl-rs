@@ -10,14 +10,19 @@ use self::gl::types::*;
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
+use std::path::Path;
 use std::ffi::CStr;
 
-use common::{process_events, processInput, loadTexture};
+use common::{process_events, processInput};
 use shader::Shader;
 use camera::Camera;
 
 use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
 use cgmath::prelude::*;
+
+use image;
+use image::GenericImage;
+use image::DynamicImage::*;
 
 // settings
 const SCR_WIDTH: u32 = 1280;
@@ -63,17 +68,16 @@ pub fn main_4_3_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture) = unsafe {
+    let (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, transparentVBO, transparentVAO, cubeTexture, floorTexture, transparentTexture, vegetation) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
-        // gl::DepthFunc(gl::ALWAYS); // always pass the depth test (same effect as glDisable(GL_DEPTH_TEST))
 
         // build and compile our shader program
         // ------------------------------------
         let shader = Shader::new(
-            "src/_4_advanced_opengl/shaders/1.1.depth_testing.vs",
-            "src/_4_advanced_opengl/shaders/1.1.depth_testing.fs");
+            "src/_4_advanced_opengl/shaders/3.1.blending.vs",
+            "src/_4_advanced_opengl/shaders/3.1.blending.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -131,6 +135,16 @@ pub fn main_4_3_1() {
             -5.0, -0.5, -5.0,  0.0, 2.0,
              5.0, -0.5, -5.0,  2.0, 2.0
         ];
+        let transparentVertices: [f32; 30] = [
+            // positions      // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0,  0.5,  0.0,  0.0,  0.0,
+            0.0, -0.5,  0.0,  0.0,  1.0,
+            1.0, -0.5,  0.0,  1.0,  1.0,
+
+            0.0,  0.5,  0.0,  0.0,  0.0,
+            1.0, -0.5,  0.0,  1.0,  1.0,
+            1.0,  0.5,  0.0,  1.0,  0.0
+        ];
         // cube VAO
         let (mut cubeVAO, mut cubeVBO) = (0, 0);
         gl::GenVertexArrays(1, &mut cubeVAO);
@@ -161,19 +175,44 @@ pub fn main_4_3_1() {
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(1);
         gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        // transparent VAO
+        let (mut transparentVAO, mut transparentVBO) = (0, 0);
+        gl::GenVertexArrays(1, &mut transparentVAO);
+        gl::GenBuffers(1, &mut transparentVBO);
+        gl::BindVertexArray(transparentVAO);
+        gl::BindBuffer(gl::ARRAY_BUFFER, transparentVBO);
+        gl::BufferData(gl::ARRAY_BUFFER,
+                       (transparentVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                       &transparentVertices[0] as *const f32 as *const c_void,
+                       gl::STATIC_DRAW);
+        gl::EnableVertexAttribArray(0);
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        gl::EnableVertexAttribArray(1);
+        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         gl::BindVertexArray(0);
 
         // load textures
         // -------------
         let cubeTexture = loadTexture("resources/textures/marble.jpg");
         let floorTexture = loadTexture("resources/textures/metal.png");
+        let transparentTexture = loadTexture("resources/textures/grass.png");
+
+        // transparent vegetation locations
+        // --------------------------------
+        let vegetation = [
+            vec3(-1.5, 0.0, -0.48),
+            vec3( 1.5, 0.0, 0.51),
+            vec3( 0.0, 0.0, 0.7),
+            vec3(-0.3, 0.0, -2.3),
+            vec3 (0.5, 0.0, -0.6)
+        ];
 
         // shader configuration
         // --------------------
         shader.useProgram();
         shader.setInt(c_str!("texture1"), 0);
 
-        (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture)
+        (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, transparentVBO, transparentVAO, cubeTexture, floorTexture, transparentTexture, vegetation)
     };
 
     // render loop
@@ -199,12 +238,13 @@ pub fn main_4_3_1() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
+            // draw objects
             shader.useProgram();
-            let mut model: Matrix4<f32>;
-            let view = camera.GetViewMatrix();
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
-            shader.setMat4(c_str!("view"), &view);
+            let view = camera.GetViewMatrix();
+            let mut model: Matrix4<f32>;
             shader.setMat4(c_str!("projection"), &projection);
+            shader.setMat4(c_str!("view"), &view);
             // cubes
             gl::BindVertexArray(cubeVAO);
             gl::ActiveTexture(gl::TEXTURE0);
@@ -221,6 +261,14 @@ pub fn main_4_3_1() {
             shader.setMat4(c_str!("model"), &Matrix4::identity());
             gl::DrawArrays(gl::TRIANGLES, 0, 6);
             gl::BindVertexArray(0);
+            // vegetation
+            gl::BindVertexArray(transparentVAO);
+            gl::BindTexture(gl::TEXTURE_2D, transparentTexture);
+            for v in &vegetation {
+                let model = Matrix4::from_translation(*v);
+                shader.setMat4(c_str!("model"), &model);
+                gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            }
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -234,7 +282,39 @@ pub fn main_4_3_1() {
     unsafe {
         gl::DeleteVertexArrays(1, &cubeVAO);
         gl::DeleteVertexArrays(1, &planeVAO);
+        gl::DeleteVertexArrays(1, &transparentVAO);
         gl::DeleteBuffers(1, &cubeVBO);
         gl::DeleteBuffers(1, &planeVBO);
+        gl::DeleteBuffers(1, &transparentVBO);
     }
+}
+
+/// utility function for loading a 2D texture from file
+/// NOTE: not the version from common.rs, slightly adapted for this tutorial
+/// ---------------------------------------------------
+pub unsafe fn loadTexture(path: &str) -> u32 {
+    let mut textureID = 0;
+
+    gl::GenTextures(1, &mut textureID);
+    let img = image::open(&Path::new(path)).expect("Texture failed to load");
+    let format = match img {
+        ImageLuma8(_) => gl::RED,
+        ImageLumaA8(_) => gl::RG,
+        ImageRgb8(_) => gl::RGB,
+        ImageRgba8(_) => gl::RGBA,
+    };
+
+    let data = img.raw_pixels();
+
+    gl::BindTexture(gl::TEXTURE_2D, textureID);
+    gl::TexImage2D(gl::TEXTURE_2D, 0, format as i32, img.width() as i32, img.height() as i32,
+        0, format, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
+    gl::GenerateMipmap(gl::TEXTURE_2D);
+
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, if format == gl::RGBA { gl::CLAMP_TO_EDGE} else { gl::REPEAT } as i32); // for this tutorial: use gl::CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat );
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, if format == gl::RGBA { gl::CLAMP_TO_EDGE} else { gl::REPEAT } as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+    textureID
 }
