@@ -45,6 +45,7 @@ pub fn main_1_1_1() {
     }
 }
 
+// NOTE: not the same version as in common.rs!
 fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
     for (_, event) in glfw::flush_messages(events) {
         match event {

@@ -298,6 +298,7 @@ pub fn main_1_7_3() {
     }
 }
 
+// NOTE: not the same version as in common.rs!
 #[allow(unknown_lints)]
 #[allow(too_many_arguments)]
 fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>,

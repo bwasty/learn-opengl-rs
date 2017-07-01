@@ -280,6 +280,7 @@ pub fn main_1_7_2() {
     }
 }
 
+// NOTE: not the same version as in common.rs!
 #[allow(unknown_lints)]
 #[allow(single_match)]
 fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>) {
