@@ -295,6 +295,7 @@ fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>) {
     }
 }
 
+/// NOTE: not the same function as the one in common.rs!
 fn processInput(window: &mut glfw::Window, deltaTime: f32, cameraPos: &mut Point3<f32>) {
     if window.get_key(Key::Escape) == Action::Press {
         window.set_should_close(true)

@@ -2,7 +2,7 @@
 #![allow(non_snake_case)]
 
 extern crate glfw;
-use self::glfw::{Context, Key, Action};
+use self::glfw::Context;
 
 extern crate gl;
 use self::gl::types::*;
@@ -13,12 +13,11 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ffi::CStr;
 
-use common::{ loadTexture };
+use common::{processInput, loadTexture};
 use shader::Shader;
 use camera::Camera;
-use camera::Camera_Movement::*;
 
-use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3, Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
@@ -267,26 +266,6 @@ fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>,
                 camera.ProcessMouseScroll(yoffset as f32);
             }
             _ => {}
-        }
     }
-}
-
-fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera) {
-    if window.get_key(Key::Escape) == Action::Press {
-        window.set_should_close(true)
     }
-
-    if window.get_key(Key::W) == Action::Press {
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    }
-    if window.get_key(Key::S) == Action::Press {
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    }
-    if window.get_key(Key::A) == Action::Press {
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    }
-    if window.get_key(Key::D) == Action::Press {
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-    }
-
 }

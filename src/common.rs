@@ -1,15 +1,38 @@
 #![allow(non_snake_case)]
 /// Common code that the original tutorials repeat over and over and over and over
 
-
 use std::os::raw::c_void;
 use std::path::Path;
 
 use gl;
+extern crate glfw;
+use self::glfw::{Key, Action};
 
 use image;
 use image::GenericImage;
 use image::DynamicImage::*;
+
+use camera::Camera;
+use camera::Camera_Movement::*;
+
+pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera) {
+    if window.get_key(Key::Escape) == Action::Press {
+        window.set_should_close(true)
+    }
+
+    if window.get_key(Key::W) == Action::Press {
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+    if window.get_key(Key::S) == Action::Press {
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+    if window.get_key(Key::A) == Action::Press {
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    }
+    if window.get_key(Key::D) == Action::Press {
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
+}
 
 /// utility function for loading a 2D texture from file
 /// ---------------------------------------------------

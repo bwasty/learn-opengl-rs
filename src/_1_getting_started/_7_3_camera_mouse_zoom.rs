@@ -366,6 +366,7 @@ fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>,
     }
 }
 
+/// NOTE: not the same function as the one in common.rs!
 fn processInput(window: &mut glfw::Window,
                 deltaTime: f32,
                 cameraPos: &mut Point3<f32>,
