@@ -29,7 +29,7 @@ For reduced compilation times, you may only compile a the code for a certain cha
 - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
 - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
-**Status:** WIP (already done: `Depth testing`, `Stencil testing`)
+**Status:** WIP (already done: `Depth testing`, `Stencil testing`, `Blending`)
 ### [7. In Practice](src/_7_in_practice)
 **Status:** `Debugging` complete (the other two are not in the repo)
 

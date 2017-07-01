@@ -28,7 +28,6 @@ use image::DynamicImage::*;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!!: currently just copy-pasted from 4.1.1
 pub fn main_4_3_1() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
