@@ -8,3 +8,5 @@ mod _3_1_blending_discard;
 pub use self::_3_1_blending_discard::*;
 mod _3_2_blending_sorted;
 pub use self::_3_2_blending_sorted::*;
+mod _5_1_framebuffers;
+pub use self::_5_1_framebuffers::*;

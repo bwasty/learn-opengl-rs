@@ -85,6 +85,7 @@ fn main() {
         #[cfg(feature = "chapter-4")] "4_2"   => main_4_2(),
         #[cfg(feature = "chapter-4")] "4_3_1" => main_4_3_1(),
         #[cfg(feature = "chapter-4")] "4_3_2" => main_4_3_2(),
+        #[cfg(feature = "chapter-4")] "4_5_1" => main_4_5_1(),
 
         #[cfg(feature = "chapter-7")] "7_1" => main_7_1(),
 
