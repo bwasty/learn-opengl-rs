@@ -216,7 +216,7 @@ pub fn main_4_1_1() {
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
             // floor
             gl::BindVertexArray(planeVAO);
-            gl::BindBuffer(gl::TEXTURE_2D, floorTexture);
+            gl::BindTexture(gl::TEXTURE_2D, floorTexture);
             shader.setMat4(c_str!("model"), &Matrix4::identity());
             gl::DrawArrays(gl::TRIANGLES, 0, 6);
             gl::BindVertexArray(0);

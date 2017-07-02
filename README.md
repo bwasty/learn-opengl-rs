@@ -1,4 +1,4 @@
-# learn-opengl-rs [![Build Status](https://travis-ci.org/bwasty/learn-opengl-rs.svg?branch=master)](https://travis-ci.org/bwasty/learn-opengl-rs) [![](https://tokei.rs/b1/github/bwasty/learn-opengl-rs)](https://github.com/Aaronepower/tokei) [![](https://tokei.rs/b1/github/bwasty/learn-opengl-rs?category=comments)](https://github.com/Aaronepower/tokei)
+# learn-opengl-rs [![Build Status](https://travis-ci.org/bwasty/learn-opengl-rs.svg?branch=master)](https://travis-ci.org/bwasty/learn-opengl-rs)
 Rust port of https://github.com/JoeyDeVries/LearnOpenGL
 
 You should be able to follow the tutorials at https://learnopengl.com/ with this - the code structure has been kept similar to the original C++ wherever possible.
@@ -29,7 +29,7 @@ For reduced compilation times, you may only compile a the code for a certain cha
 - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
 - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
-**Status:** WIP (already done: `Depth testing`, `Stencil testing`, `Blending`)
+**Status:** WIP, already done: `Depth testing`, `Stencil testing`, `Blending`, `Framebuffers`
 ### [7. In Practice](src/_7_in_practice)
 **Status:** `Debugging` complete (the other two are not in the repo)
 
