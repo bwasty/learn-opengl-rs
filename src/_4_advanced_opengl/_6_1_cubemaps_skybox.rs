@@ -63,7 +63,7 @@ pub fn main_4_6_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture) = unsafe {
+    let (shader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -72,8 +72,11 @@ pub fn main_4_6_1() {
         // build and compile our shader program
         // ------------------------------------
         let shader = Shader::new(
-            "src/_4_advanced_opengl/shaders/1.1.depth_testing.vs",
-            "src/_4_advanced_opengl/shaders/1.1.depth_testing.fs");
+            "src/_4_advanced_opengl/shaders/6.1.cubemaps.vs",
+            "src/_4_advanced_opengl/shaders/6.1.cubemaps.fs");
+        let shader = Shader::new(
+            "src/_4_advanced_opengl/shaders/6.1.skybox.vs",
+            "src/_4_advanced_opengl/shaders/6.1.skybox.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -121,16 +124,51 @@ pub fn main_4_6_1() {
              -0.5,  0.5,  0.5,  0.0, 0.0,
              -0.5,  0.5, -0.5,  0.0, 1.0
         ];
-        let planeVertices: [f32; 30] = [
-            // positions       // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
-             5.0, -0.5,  5.0,  2.0, 0.0,
-            -5.0, -0.5,  5.0,  0.0, 0.0,
-            -5.0, -0.5, -5.0,  0.0, 2.0,
+        let skyboxVertices: [f32; 108] = [
+            // positions
+            -1.0,  1.0, -1.0,
+            -1.0, -1.0, -1.0,
+             1.0, -1.0, -1.0,
+             1.0, -1.0, -1.0,
+             1.0,  1.0, -1.0,
+            -1.0,  1.0, -1.0,
 
-             5.0, -0.5,  5.0,  2.0, 0.0,
-            -5.0, -0.5, -5.0,  0.0, 2.0,
-             5.0, -0.5, -5.0,  2.0, 2.0
+            -1.0, -1.0,  1.0,
+            -1.0, -1.0, -1.0,
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0,  1.0,
+            -1.0, -1.0,  1.0,
+
+             1.0, -1.0, -1.0,
+             1.0, -1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0, -1.0,
+             1.0, -1.0, -1.0,
+
+            -1.0, -1.0,  1.0,
+            -1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0, -1.0,  1.0,
+            -1.0, -1.0,  1.0,
+
+            -1.0,  1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0,  1.0, -1.0,
+
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+             1.0, -1.0, -1.0,
+             1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+             1.0, -1.0,  1.0
         ];
+
         // cube VAO
         let (mut cubeVAO, mut cubeVBO) = (0, 0);
         gl::GenVertexArrays(1, &mut cubeVAO);
@@ -141,39 +179,38 @@ pub fn main_4_6_1() {
                        (cubeVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                        &cubeVertices[0] as *const f32 as *const c_void,
                        gl::STATIC_DRAW);
-        let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
+        let mut stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
         gl::EnableVertexAttribArray(0);
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(1);
         gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         gl::BindVertexArray(0);
-        // plane VAO
-        let (mut planeVAO, mut planeVBO) = (0, 0);
-        gl::GenVertexArrays(1, &mut planeVAO);
-        gl::GenBuffers(1, &mut planeVBO);
-        gl::BindVertexArray(planeVAO);
-        gl::BindBuffer(gl::ARRAY_BUFFER, planeVBO);
+        // skybox VAO
+        let (mut skyboxVAO, mut skyboxVBO) = (0, 0);
+        gl::GenVertexArrays(1, &mut skyboxVAO);
+        gl::GenBuffers(1, &mut skyboxVBO);
+        gl::BindVertexArray(skyboxVAO);
+        gl::BindBuffer(gl::ARRAY_BUFFER, skyboxVBO);
         gl::BufferData(gl::ARRAY_BUFFER,
-                       (planeVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                       &planeVertices[0] as *const f32 as *const c_void,
+                       (skyboxVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                       &skyboxVertices[0] as *const f32 as *const c_void,
                        gl::STATIC_DRAW);
         gl::EnableVertexAttribArray(0);
+        stride = 3 * mem::size_of::<GLfloat>() as GLsizei;
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
-        gl::EnableVertexAttribArray(1);
-        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::BindVertexArray(0);
 
         // load textures
         // -------------
         let cubeTexture = loadTexture("resources/textures/marble.jpg");
-        let floorTexture = loadTexture("resources/textures/metal.png");
+
+        // TODO!!!
 
         // shader configuration
         // --------------------
         shader.useProgram();
         shader.setInt(c_str!("texture1"), 0);
 
-        (shader, cubeVBO, cubeVAO, planeVBO, planeVAO, cubeTexture, floorTexture)
+        (shader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture)
     };
 
     // render loop
@@ -215,12 +252,6 @@ pub fn main_4_6_1() {
             model = Matrix4::from_translation(vec3(2.0, 0.0, 0.0));
             shader.setMat4(c_str!("model"), &model);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
-            // floor
-            gl::BindVertexArray(planeVAO);
-            gl::BindTexture(gl::TEXTURE_2D, floorTexture);
-            shader.setMat4(c_str!("model"), &Matrix4::identity());
-            gl::DrawArrays(gl::TRIANGLES, 0, 6);
-            gl::BindVertexArray(0);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -233,8 +264,8 @@ pub fn main_4_6_1() {
     // ------------------------------------------------------------------------
     unsafe {
         gl::DeleteVertexArrays(1, &cubeVAO);
-        gl::DeleteVertexArrays(1, &planeVAO);
+        gl::DeleteVertexArrays(1, &skyboxVAO);
         gl::DeleteBuffers(1, &cubeVBO);
-        gl::DeleteBuffers(1, &planeVBO);
+        gl::DeleteBuffers(1, &skyboxVBO);
     }
 }
