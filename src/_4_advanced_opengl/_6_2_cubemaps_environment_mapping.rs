@@ -19,7 +19,7 @@ use cgmath::prelude::*;
 use image;
 use image::GenericImage;
 
-use common::{process_events, processInput, loadTexture};
+use common::{process_events, processInput};
 use shader::Shader;
 use camera::Camera;
 
@@ -27,7 +27,7 @@ use camera::Camera;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-pub fn main_4_6_1() {
+pub fn main_4_6_2() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -66,7 +66,7 @@ pub fn main_4_6_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, skyboxShader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture, cubemapTexture) = unsafe {
+    let (shader, skyboxShader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubemapTexture) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -75,57 +75,57 @@ pub fn main_4_6_1() {
         // build and compile our shader program
         // ------------------------------------
         let shader = Shader::new(
-            "src/_4_advanced_opengl/shaders/6.1.cubemaps.vs",
-            "src/_4_advanced_opengl/shaders/6.1.cubemaps.fs");
+            "src/_4_advanced_opengl/shaders/6.2.cubemaps.vs",
+            "src/_4_advanced_opengl/shaders/6.2.cubemaps.fs");
         let skyboxShader = Shader::new(
-            "src/_4_advanced_opengl/shaders/6.1.skybox.vs",
-            "src/_4_advanced_opengl/shaders/6.1.skybox.fs");
+            "src/_4_advanced_opengl/shaders/6.2.skybox.vs",
+            "src/_4_advanced_opengl/shaders/6.2.skybox.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
-        let cubeVertices: [f32; 180] = [
-             // positions       // texture Coords
-             -0.5, -0.5, -0.5,  0.0, 0.0,
-              0.5, -0.5, -0.5,  1.0, 0.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-             -0.5,  0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 0.0,
+        let cubeVertices: [f32; 216] = [
+            // positions       // normals
+            -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+             0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+             0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+             0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+            -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+            -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
 
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 1.0,
-              0.5,  0.5,  0.5,  1.0, 1.0,
-             -0.5,  0.5,  0.5,  0.0, 1.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
+            -0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
+             0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
+             0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+             0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+            -0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+            -0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
 
-             -0.5,  0.5,  0.5,  1.0, 0.0,
-             -0.5,  0.5, -0.5,  1.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-             -0.5,  0.5,  0.5,  1.0, 0.0,
+            -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+            -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
+            -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+            -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+            -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
+            -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
 
-              0.5,  0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5,  0.5,  0.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
+             0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+             0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
+             0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+             0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+             0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
+             0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
 
-             -0.5, -0.5, -0.5,  0.0, 1.0,
-              0.5, -0.5, -0.5,  1.0, 1.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-              0.5, -0.5,  0.5,  1.0, 0.0,
-             -0.5, -0.5,  0.5,  0.0, 0.0,
-             -0.5, -0.5, -0.5,  0.0, 1.0,
+            -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+             0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+             0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+             0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+            -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+            -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
 
-             -0.5,  0.5, -0.5,  0.0, 1.0,
-              0.5,  0.5, -0.5,  1.0, 1.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-              0.5,  0.5,  0.5,  1.0, 0.0,
-             -0.5,  0.5,  0.5,  0.0, 0.0,
-             -0.5,  0.5, -0.5,  0.0, 1.0
+            -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+             0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+             0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+             0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+            -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+            -0.5,  0.5, -0.5,  0.0,  1.0,  0.0
         ];
         let skyboxVertices: [f32; 108] = [
             // positions
@@ -182,12 +182,11 @@ pub fn main_4_6_1() {
                        (cubeVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                        &cubeVertices[0] as *const f32 as *const c_void,
                        gl::STATIC_DRAW);
-        let mut stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
+        let mut stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
         gl::EnableVertexAttribArray(0);
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(1);
-        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::BindVertexArray(0);
+        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
         // skybox VAO
         let (mut skyboxVAO, mut skyboxVBO) = (0, 0);
         gl::GenVertexArrays(1, &mut skyboxVAO);
@@ -204,8 +203,6 @@ pub fn main_4_6_1() {
 
         // load textures
         // -------------
-        let cubeTexture = loadTexture("resources/textures/container.jpg");
-
         let faces = [
             "resources/textures/skybox/right.jpg",
             "resources/textures/skybox/left.jpg",
@@ -219,12 +216,12 @@ pub fn main_4_6_1() {
         // shader configuration
         // --------------------
         shader.useProgram();
-        shader.setInt(c_str!("texture1"), 0);
+        shader.setInt(c_str!("skybox"), 0);
 
         skyboxShader.useProgram();
         skyboxShader.setInt(c_str!("skybox"), 0);
 
-        (shader, skyboxShader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture, cubemapTexture)
+        (shader, skyboxShader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubemapTexture)
     };
 
     // render loop
@@ -257,11 +254,13 @@ pub fn main_4_6_1() {
             shader.setMat4(c_str!("model"), &model);
             shader.setMat4(c_str!("view"), &view);
             shader.setMat4(c_str!("projection"), &projection);
+            shader.setVector3(c_str!("cameraPos"), &camera.Position.to_vec());
             // cubes
             gl::BindVertexArray(cubeVAO);
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, cubeTexture);
+            gl::BindTexture(gl::TEXTURE_2D, cubemapTexture);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            gl::BindVertexArray(0);
 
             // draw skybox as last
             gl::DepthFunc(gl::LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content

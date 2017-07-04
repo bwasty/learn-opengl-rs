@@ -12,3 +12,5 @@ mod _5_1_framebuffers;
 pub use self::_5_1_framebuffers::*;
 mod _6_1_cubemaps_skybox;
 pub use self::_6_1_cubemaps_skybox::*;
+mod _6_2_cubemaps_environment_mapping;
+pub use self::_6_2_cubemaps_environment_mapping::*;
