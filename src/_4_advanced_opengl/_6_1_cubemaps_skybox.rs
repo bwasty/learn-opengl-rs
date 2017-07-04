@@ -1,23 +1,27 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
+use std::ptr;
+use std::mem;
+use std::os::raw::c_void;
+use std::path::Path;
+use std::ffi::CStr;
+
 extern crate glfw;
 use self::glfw::Context;
 
 extern crate gl;
 use self::gl::types::*;
 
-use std::ptr;
-use std::mem;
-use std::os::raw::c_void;
-use std::ffi::CStr;
+use cgmath::{Matrix4,  Deg, perspective, Point3};
+use cgmath::prelude::*;
+
+use image;
+use image::GenericImage;
 
 use common::{process_events, processInput, loadTexture};
 use shader::Shader;
 use camera::Camera;
-
-use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
-use cgmath::prelude::*;
 
 // settings
 const SCR_WIDTH: u32 = 1280;
@@ -63,7 +67,7 @@ pub fn main_4_6_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture) = unsafe {
+    let (shader, skyboxShader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture, cubemapTexture) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -74,7 +78,7 @@ pub fn main_4_6_1() {
         let shader = Shader::new(
             "src/_4_advanced_opengl/shaders/6.1.cubemaps.vs",
             "src/_4_advanced_opengl/shaders/6.1.cubemaps.fs");
-        let shader = Shader::new(
+        let skyboxShader = Shader::new(
             "src/_4_advanced_opengl/shaders/6.1.skybox.vs",
             "src/_4_advanced_opengl/shaders/6.1.skybox.fs");
 
@@ -201,16 +205,27 @@ pub fn main_4_6_1() {
 
         // load textures
         // -------------
-        let cubeTexture = loadTexture("resources/textures/marble.jpg");
+        let cubeTexture = loadTexture("resources/textures/container.jpg");
 
-        // TODO!!!
+        let faces = [
+            "resources/textures/skybox/right.jpg",
+            "resources/textures/skybox/left.jpg",
+            "resources/textures/skybox/top.jpg",
+            "resources/textures/skybox/bottom.jpg",
+            "resources/textures/skybox/back.jpg",
+            "resources/textures/skybox/front.jpg"
+        ];
+        let cubemapTexture = loadCubemap(&faces);
 
         // shader configuration
         // --------------------
         shader.useProgram();
         shader.setInt(c_str!("texture1"), 0);
 
-        (shader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture)
+        skyboxShader.useProgram();
+        skyboxShader.setInt(c_str!("skybox"), 0);
+
+        (shader, skyboxShader, cubeVBO, cubeVAO, skyboxVBO, skyboxVAO, cubeTexture, cubemapTexture)
     };
 
     // render loop
@@ -237,21 +252,35 @@ pub fn main_4_6_1() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             shader.useProgram();
-            let mut model: Matrix4<f32>;
-            let view = camera.GetViewMatrix();
+            let model: Matrix4<f32> = Matrix4::identity();
+            let mut view = camera.GetViewMatrix();
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
+            shader.setMat4(c_str!("model"), &model);
             shader.setMat4(c_str!("view"), &view);
             shader.setMat4(c_str!("projection"), &projection);
             // cubes
             gl::BindVertexArray(cubeVAO);
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, cubeTexture);
-            model = Matrix4::from_translation(vec3(-1.0, 0.0, -1.0));
-            shader.setMat4(c_str!("model"), &model);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
-            model = Matrix4::from_translation(vec3(2.0, 0.0, 0.0));
-            shader.setMat4(c_str!("model"), &model);
+
+            // draw skybox as last
+            gl::DepthFunc(gl::LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+            skyboxShader.useProgram();
+            // remove translation from the view matrix
+            view = camera.GetViewMatrix();
+            view.w[0] = 0.0;
+            view.w[1] = 0.0;
+            view.w[2] = 0.0;
+            skyboxShader.setMat4(c_str!("view"), &view);
+            skyboxShader.setMat4(c_str!("projection"), &projection);
+            // skybox cube
+            gl::BindVertexArray(skyboxVAO);
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_CUBE_MAP, cubemapTexture);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            gl::BindVertexArray(0);
+            gl::DepthFunc(gl::LESS); // set depth function back to default
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -268,4 +297,38 @@ pub fn main_4_6_1() {
         gl::DeleteBuffers(1, &cubeVBO);
         gl::DeleteBuffers(1, &skyboxVBO);
     }
+}
+
+/// loads a cubemap texture from 6 individual texture faces
+/// order:
+/// +X (right)
+/// -X (left)
+/// +Y (top)
+/// -Y (bottom)
+/// +Z (front)
+/// -Z (back)
+/// -------------------------------------------------------
+unsafe fn loadCubemap(faces: &[&str]) -> u32 {
+    let mut textureID = 0;
+    gl::GenTextures(1, &mut textureID);
+    gl::BindTexture(gl::TEXTURE_CUBE_MAP, textureID);
+
+    for (i, face) in faces.iter().enumerate() {
+        let img = image::open(&Path::new(face)).expect("Cubemap texture failed to load");
+
+        let data = img.raw_pixels();
+        gl::TexImage2D(
+            gl::TEXTURE_CUBE_MAP_POSITIVE_X + i as u32,
+            0, gl::RGB as i32, img.width() as i32, img.height() as i32,
+            0, gl::RGB, gl::UNSIGNED_BYTE,
+            &data[0] as *const u8 as *const c_void);
+    }
+
+    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+
+    textureID
 }
