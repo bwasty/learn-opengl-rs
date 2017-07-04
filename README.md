@@ -9,7 +9,9 @@ Run individual tutorials like this:
 
 For reduced compilation times, you may only compile a the code for a certain chapter, by adding `--no-default-features --features chapter-1` for example.
 
-<img width="290" alt="1_3_2" src="https://user-images.githubusercontent.com/1647415/27755053-d5cd0f5a-5ded-11e7-99b4-abd4e3bb8638.png"><img width="290" alt="2_6" src="https://user-images.githubusercontent.com/1647415/27755102-fd217078-5ded-11e7-96f6-efdeb9ffdcac.png"><img width="290" alt="3_1" src="https://user-images.githubusercontent.com/1647415/27755660-52df4104-5df1-11e7-800c-45a514bf3130.png">
+<img width="215" alt="1_3_2" src="https://user-images.githubusercontent.com/1647415/27755053-d5cd0f5a-5ded-11e7-99b4-abd4e3bb8638.png"><img width="215" alt="2_6" src="https://user-images.githubusercontent.com/1647415/27755102-fd217078-5ded-11e7-96f6-efdeb9ffdcac.png"><img width="215" alt="3_1" src="https://user-images.githubusercontent.com/1647415/27755660-52df4104-5df1-11e7-800c-45a514bf3130.png">
+<img width="215" alt="4_6_2" src="https://user-images.githubusercontent.com/1647415/27843160-306a96aa-6111-11e7-8b89-15820f39cff0.png">
+
 
 ## Chapters
 ### [1. Getting started](src/_1_getting_started)
@@ -29,7 +31,7 @@ For reduced compilation times, you may only compile a the code for a certain cha
 - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
 - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
-**Status:** WIP, already done: `Depth testing`, `Stencil testing`, `Blending`, `Framebuffers`
+**Status:** WIP, already done: `Depth testing`, `Stencil testing`, `Blending`, `Framebuffers`, `Cubemaps`
 ### [7. In Practice](src/_7_in_practice)
 **Status:** `Debugging` complete (the other two are not in the repo)
 
