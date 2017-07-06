@@ -4,7 +4,6 @@
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
-use std::path::Path;
 use std::ffi::CStr;
 
 extern crate glfw;
@@ -13,11 +12,8 @@ use self::glfw::Context;
 extern crate gl;
 use self::gl::types::*;
 
-use cgmath::{Matrix4,  Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3, Deg, perspective, Point3};
 use cgmath::prelude::*;
-
-use image;
-use image::GenericImage;
 
 use common::{process_events, processInput};
 use shader::Shader;
@@ -27,7 +23,6 @@ use camera::Camera;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO: copied from 4_6_2
 pub fn main_4_8() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
@@ -67,18 +62,17 @@ pub fn main_4_8() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shaderRed, shaderGreen, shaderBlue, shaderYellow, cubeVBO, cubeVAO) = unsafe {
+    let (shaderRed, shaderGreen, shaderBlue, shaderYellow, cubeVBO, cubeVAO, uboMatrices) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
-        gl::DepthFunc(gl::ALWAYS); // always pass the depth test (same effect as glDisable(GL_DEPTH_TEST))
 
         // build and compile shaders
         // -------------------------
-        let shaderRed = Shader::new("8.advanced_glsl.vs", "8.red.fs");
-        let shaderGreen = Shader::new("8.advanced_glsl.vs", "8.green.fs");
-        let shaderBlue = Shader::new("8.advanced_glsl.vs", "8.blue.fs");
-        let shaderYellow = Shader::new("8.advanced_glsl.vs", "8.yellow.fs");
+        let shaderRed = Shader::new("src/_4_advanced_opengl/shaders/8.advanced_glsl.vs", "src/_4_advanced_opengl/shaders/8.red.fs");
+        let shaderGreen = Shader::new("src/_4_advanced_opengl/shaders/8.advanced_glsl.vs", "src/_4_advanced_opengl/shaders/8.green.fs");
+        let shaderBlue = Shader::new("src/_4_advanced_opengl/shaders/8.advanced_glsl.vs", "src/_4_advanced_opengl/shaders/8.blue.fs");
+        let shaderYellow = Shader::new("src/_4_advanced_opengl/shaders/8.advanced_glsl.vs", "src/_4_advanced_opengl/shaders/8.yellow.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -143,10 +137,30 @@ pub fn main_4_8() {
         // configure a uniform buffer object
         // ---------------------------------
         // first. We get the relevant block indices
-        //  TODO!!!
+        let uniformBlockIndexRed = gl::GetUniformBlockIndex(shaderRed.ID, c_str!("Matrices").as_ptr());
+        let uniformBlockIndexGreen = gl::GetUniformBlockIndex(shaderGreen.ID, c_str!("Matrices").as_ptr());
+        let uniformBlockIndexBlue = gl::GetUniformBlockIndex(shaderBlue.ID, c_str!("Matrices").as_ptr());
+        let uniformBlockIndexYellow = gl::GetUniformBlockIndex(shaderYellow.ID, c_str!("Matrices").as_ptr());
+        // then we link each shader's uniform block to this uniform binding point
+        gl::UniformBlockBinding(shaderRed.ID, uniformBlockIndexRed, 0);
+        gl::UniformBlockBinding(shaderGreen.ID, uniformBlockIndexGreen, 0);
+        gl::UniformBlockBinding(shaderBlue.ID, uniformBlockIndexBlue, 0);
+        gl::UniformBlockBinding(shaderYellow.ID, uniformBlockIndexYellow, 0);
+        // Now actually create the buffer
+        let mut uboMatrices = 0;
+        gl::GenBuffers(1, &mut uboMatrices);
+        gl::BindBuffer(gl::UNIFORM_BUFFER, uboMatrices);
+        gl::BufferData(gl::UNIFORM_BUFFER, 2 * mem::size_of::<Matrix4<f32>>() as isize, ptr::null(), gl::STATIC_DRAW);
+        // define the range of the buffer that links to a uniform binding point
+        gl::BindBufferRange(gl::UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * 2 * mem::size_of::<Matrix4<f32>>() as isize);
 
+        // store the projection matrix (we only do this once now) (note: we're not using zoom anymore by changing the FoV)
+        let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
+        gl::BindBuffer(gl::UNIFORM_BUFFER, uboMatrices);
+        gl::BufferSubData(gl::UNIFORM_BUFFER, 0, mem::size_of::<Matrix4<f32>>() as isize, projection.as_ptr() as *const c_void);
+        gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
 
-        (shaderRed, shaderGreen, shaderBlue, shaderYellow, cubeVBO, cubeVAO)
+        (shaderRed, shaderGreen, shaderBlue, shaderYellow, cubeVBO, cubeVAO, uboMatrices)
     };
 
     // render loop
@@ -172,11 +186,35 @@ pub fn main_4_8() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // cubes
+            // set the view and projection matrix in the uniform block - we only have to do this once per loop iteration.
+            let view = camera.GetViewMatrix();
+            gl::BindBuffer(gl::UNIFORM_BUFFER, uboMatrices);
+            let size = mem::size_of::<Matrix4<f32>>() as isize;
+            gl::BufferSubData(gl::UNIFORM_BUFFER, size, size, view.as_ptr() as *const c_void);
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+
+            // draw 4 cubes
+            // RED
             gl::BindVertexArray(cubeVAO);
-            gl::ActiveTexture(gl::TEXTURE0);
+            shaderRed.useProgram();
+            let mut model = Matrix4::from_translation(vec3(-0.75, 0.75, 0.0)); // move top-left
+            shaderRed.setMat4(c_str!("model"), &model);
             gl::DrawArrays(gl::TRIANGLES, 0, 36);
-            gl::BindVertexArray(0);
+            // GREEN
+            shaderGreen.useProgram();
+            model = Matrix4::from_translation(vec3(0.75, 0.75, 0.0)); // move top-right
+            shaderGreen.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            // YELLOW
+            shaderYellow.useProgram();
+            model = Matrix4::from_translation(vec3(-0.75, -0.75, 0.0)); // move bottom-left
+            shaderYellow.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            // BLUE
+            shaderBlue.useProgram();
+            model = Matrix4::from_translation(vec3(0.75, -0.75, 0.0)); // move bottom-right
+            shaderBlue.setMat4(c_str!("model"), &model);
+            gl::DrawArrays(gl::TRIANGLES, 0, 36);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -191,38 +229,4 @@ pub fn main_4_8() {
         gl::DeleteVertexArrays(1, &cubeVAO);
         gl::DeleteBuffers(1, &cubeVBO);
     }
-}
-
-/// loads a cubemap texture from 6 individual texture faces
-/// order:
-/// +X (right)
-/// -X (left)
-/// +Y (top)
-/// -Y (bottom)
-/// +Z (front)
-/// -Z (back)
-/// -------------------------------------------------------
-unsafe fn loadCubemap(faces: &[&str]) -> u32 {
-    let mut textureID = 0;
-    gl::GenTextures(1, &mut textureID);
-    gl::BindTexture(gl::TEXTURE_CUBE_MAP, textureID);
-
-    for (i, face) in faces.iter().enumerate() {
-        let img = image::open(&Path::new(face)).expect("Cubemap texture failed to load");
-
-        let data = img.raw_pixels();
-        gl::TexImage2D(
-            gl::TEXTURE_CUBE_MAP_POSITIVE_X + i as u32,
-            0, gl::RGB as i32, img.width() as i32, img.height() as i32,
-            0, gl::RGB, gl::UNSIGNED_BYTE,
-            &data[0] as *const u8 as *const c_void);
-    }
-
-    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-    gl::TexParameteri(gl::TEXTURE_CUBE_MAP, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
-
-    textureID
 }
