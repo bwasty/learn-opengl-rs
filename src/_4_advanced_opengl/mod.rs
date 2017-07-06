@@ -14,3 +14,5 @@ mod _6_1_cubemaps_skybox;
 pub use self::_6_1_cubemaps_skybox::*;
 mod _6_2_cubemaps_environment_mapping;
 pub use self::_6_2_cubemaps_environment_mapping::*;
+mod _8_advanced_glsl_ubo;
+pub use self::_8_advanced_glsl_ubo::*;
