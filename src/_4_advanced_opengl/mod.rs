@@ -16,3 +16,5 @@ mod _6_2_cubemaps_environment_mapping;
 pub use self::_6_2_cubemaps_environment_mapping::*;
 mod _8_advanced_glsl_ubo;
 pub use self::_8_advanced_glsl_ubo::*;
+mod _9_1_geometry_shader_houses;
+pub use self::_9_1_geometry_shader_houses::*;
