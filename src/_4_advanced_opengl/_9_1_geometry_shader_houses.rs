@@ -67,11 +67,10 @@ pub fn main_4_9_1() {
 
         // build and compile shaders
         // -------------------------
-        // TODO!!!: new shader struct with GS support..
-        let shader = Shader::new(
+        let shader = Shader::with_geometry_shader(
             "src/_4_advanced_opengl/shaders/9.1.geometry_shader.vs",
             "src/_4_advanced_opengl/shaders/9.1.geometry_shader.fs",
-            // "src/_4_advanced_opengl/shaders/9.1.geometry_shader.gs"
+            "src/_4_advanced_opengl/shaders/9.1.geometry_shader.gs"
         );
 
         // set up vertex data (and buffer(s)) and configure vertex attributes

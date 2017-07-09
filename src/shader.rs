@@ -123,4 +123,63 @@ impl Shader {
         }
 
     }
+
+    /// Only used in 4.9 Geometry shaders - ignore until then (shader.h in original C++)
+    pub fn with_geometry_shader(vertexPath: &str, fragmentPath: &str, geometryPath: &str) -> Self {
+        let mut shader = Shader { ID: 0 };
+        // 1. retrieve the vertex/fragment source code from filesystem
+        let mut vShaderFile = File::open(vertexPath).expect(&format!("Failed to open {}", vertexPath));
+        let mut fShaderFile = File::open(fragmentPath).expect(&format!("Failed to open {}", fragmentPath));
+        let mut gShaderFile = File::open(geometryPath).expect(&format!("Failed to open {}", geometryPath));
+        let mut vertexCode = String::new();
+        let mut fragmentCode = String::new();
+        let mut geometryCode = String::new();
+        vShaderFile
+            .read_to_string(&mut vertexCode)
+            .expect("Failed to read vertex shader");
+        fShaderFile
+            .read_to_string(&mut fragmentCode)
+            .expect("Failed to read fragment shader");
+        gShaderFile
+            .read_to_string(&mut geometryCode)
+            .expect("Failed to read geometry shader");
+
+        let vShaderCode = CString::new(vertexCode.as_bytes()).unwrap();
+        let fShaderCode = CString::new(fragmentCode.as_bytes()).unwrap();
+        let gShaderCode = CString::new(geometryCode.as_bytes()).unwrap();
+
+        // 2. compile shaders
+        unsafe {
+            // vertex shader
+            let vertex = gl::CreateShader(gl::VERTEX_SHADER);
+            gl::ShaderSource(vertex, 1, &vShaderCode.as_ptr(), ptr::null());
+            gl::CompileShader(vertex);
+            shader.checkCompileErrors(vertex, "VERTEX");
+            // fragment Shader
+            let fragment = gl::CreateShader(gl::FRAGMENT_SHADER);
+            gl::ShaderSource(fragment, 1, &fShaderCode.as_ptr(), ptr::null());
+            gl::CompileShader(fragment);
+            shader.checkCompileErrors(fragment, "FRAGMENT");
+            // geometry shader
+            let geometry = gl::CreateShader(gl::GEOMETRY_SHADER);
+            gl::ShaderSource(geometry, 1, &gShaderCode.as_ptr(), ptr::null());
+            gl::CompileShader(geometry);
+            shader.checkCompileErrors(geometry, "GEOMETRY");
+
+            // shader Program
+            let ID = gl::CreateProgram();
+            gl::AttachShader(ID, vertex);
+            gl::AttachShader(ID, fragment);
+            gl::AttachShader(ID, geometry);
+            gl::LinkProgram(ID);
+            shader.checkCompileErrors(ID, "PROGRAM");
+            // delete the shaders as they're linked into our program now and no longer necessary
+            gl::DeleteShader(vertex);
+            gl::DeleteShader(fragment);
+            gl::DeleteShader(geometry);
+            shader.ID = ID;
+        }
+
+        shader
+    }
 }
