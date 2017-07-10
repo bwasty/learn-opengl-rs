@@ -18,3 +18,5 @@ mod _8_advanced_glsl_ubo;
 pub use self::_8_advanced_glsl_ubo::*;
 mod _9_1_geometry_shader_houses;
 pub use self::_9_1_geometry_shader_houses::*;
+mod _9_2_geometry_shader_exploding;
+pub use self::_9_2_geometry_shader_exploding::*;
