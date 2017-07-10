@@ -77,6 +77,7 @@ pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Came
 
 /// utility function for loading a 2D texture from file
 /// ---------------------------------------------------
+#[allow(dead_code)]
 pub unsafe fn loadTexture(path: &str) -> u32 {
     let mut textureID = 0;
 
