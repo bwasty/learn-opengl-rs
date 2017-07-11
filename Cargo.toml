@@ -10,6 +10,7 @@ glfw = "0.15.0"
 image = "0.14.0"
 # only needed from chapter 3 on
 tobj = "0.1.6"
+num = "0.1.39"
 
 [features]
 default = [

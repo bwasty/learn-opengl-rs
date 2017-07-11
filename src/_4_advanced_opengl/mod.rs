@@ -22,3 +22,5 @@ mod _9_2_geometry_shader_exploding;
 pub use self::_9_2_geometry_shader_exploding::*;
 mod _9_3_normal_visualization;
 pub use  self::_9_3_normal_visualization::*;
+mod _10_1_instancing_quads;
+pub use self::_10_1_instancing_quads::*;
