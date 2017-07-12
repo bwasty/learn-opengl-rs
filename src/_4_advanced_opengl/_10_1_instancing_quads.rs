@@ -13,7 +13,8 @@ use self::gl::types::*;
 
 use cgmath::{Vector2};
 
-use num::range_step;
+extern crate num;
+use self::num::range_step;
 
 use shader::Shader;
 
@@ -94,7 +95,7 @@ pub fn main_4_10_1() {
         let (mut quadVAO, mut quadVBO) = (0, 0);
         gl::GenVertexArrays(1, &mut quadVAO);
         gl::GenBuffers(1, &mut quadVBO);
-        gl::BindVertexArray(quadVBO);
+        gl::BindVertexArray(quadVAO);
         gl::BindBuffer(gl::ARRAY_BUFFER, quadVBO);
         gl::BufferData(gl::ARRAY_BUFFER,
                        (quadVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
