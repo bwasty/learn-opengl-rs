@@ -15,13 +15,13 @@ use model::Model;
 use cgmath::{Matrix4, vec3, Point3, Deg, perspective};
 
 // settings
-const SCR_WIDTH: u32 = 800;
-const SCR_HEIGHT: u32 = 600;
+const SCR_WIDTH: u32 = 1280;
+const SCR_HEIGHT: u32 = 720;
 
 // TODO!: started as copy of 3.1
 pub fn main_4_10_2() {
     let mut camera = Camera {
-        Position: Point3::new(0.0, 0.0, 3.0),
+        Position: Point3::new(0.0, 0.0, 55.0),
         ..Camera::default()
     };
 
@@ -58,25 +58,35 @@ pub fn main_4_10_2() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (ourShader, ourModel) = unsafe {
+    let (shader, rock, planet) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
 
         // build and compile shaders
         // -------------------------
-        let ourShader = Shader::new(
-            "src/_3_model_loading/shaders/1.model_loading.vs",
-            "src/_3_model_loading/shaders/1.model_loading.fs");
+        let shader = Shader::new(
+            "src/_3_model_loading/shaders/10.2.instancing.vs",
+            "src/_3_model_loading/shaders/10.2.instancing.fs");
 
         // load models
         // -----------
-        let ourModel = Model::new("resources/objects/nanosuit/nanosuit.obj");
+        let rock = Model::new("resources/objects/rock/rock.obj");
+        let planet = Model::new("resources/objects/planet/planet.obj");
 
-        // draw in wireframe
-        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+        // generate a large list of semi-random model transformation matrices
+        // ------------------------------------------------------------------
+        let amount = 1000;
+        let modelMatrices: Vec<Matrix4<f32>> = Vec::with_capacity(1000);
+        // TODO!!: seed random generator
+        // srand(glfwGetTime()); // initialize random seed
+        let radius = 50.0;
+        let offset = 2.5;
+        for i in (0..amount) {
+            // TODO!!!
+        }
 
-        (ourShader, ourModel)
+        (shader, rock, planet)
     };
 
     // render loop
@@ -103,19 +113,19 @@ pub fn main_4_10_2() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             // don't forget to enable shader before setting uniforms
-            ourShader.useProgram();
+            shader.useProgram();
 
             // view/projection transformations
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
             let view = camera.GetViewMatrix();
-            ourShader.setMat4(c_str!("projection"), &projection);
-            ourShader.setMat4(c_str!("view"), &view);
+            shader.setMat4(c_str!("projection"), &projection);
+            shader.setMat4(c_str!("view"), &view);
 
             // render the loaded model
             let mut model = Matrix4::<f32>::from_translation(vec3(0.0, -1.75, 0.0)); // translate it down so it's at the center of the scene
             model = model * Matrix4::from_scale(0.2);  // it's a bit too big for our scene, so scale it down
-            ourShader.setMat4(c_str!("model"), &model);
-            ourModel.Draw(&ourShader);
+            shader.setMat4(c_str!("model"), &model);
+            rock.Draw(&shader);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
