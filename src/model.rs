@@ -18,7 +18,7 @@ use shader::Shader;
 pub struct Model {
     /*  Model Data */
     pub meshes: Vec<Mesh>,
-    textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+    pub textures_loaded: Vec<Texture>,   // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     directory: String,
 }
 

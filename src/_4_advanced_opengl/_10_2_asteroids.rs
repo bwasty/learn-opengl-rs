@@ -21,7 +21,6 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!: started as copy of 3.1
 pub fn main_4_10_2() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 55.0),
