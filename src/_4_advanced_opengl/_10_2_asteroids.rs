@@ -4,6 +4,8 @@ extern crate glfw;
 use self::glfw::Context;
 
 extern crate gl;
+extern crate rand;
+use self::rand::Rng;
 
 use std::ffi::CStr;
 
@@ -13,6 +15,7 @@ use camera::Camera;
 use model::Model;
 
 use cgmath::{Matrix4, vec3, Point3, Deg, perspective};
+use cgmath::prelude::*;
 
 // settings
 const SCR_WIDTH: u32 = 1280;
@@ -58,7 +61,7 @@ pub fn main_4_10_2() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, rock, planet) = unsafe {
+    let (shader, rock, planet, modelMatrices) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -66,8 +69,8 @@ pub fn main_4_10_2() {
         // build and compile shaders
         // -------------------------
         let shader = Shader::new(
-            "src/_3_model_loading/shaders/10.2.instancing.vs",
-            "src/_3_model_loading/shaders/10.2.instancing.fs");
+            "src/_4_advanced_opengl/shaders/10.2.instancing.vs",
+            "src/_4_advanced_opengl/shaders/10.2.instancing.fs");
 
         // load models
         // -----------
@@ -77,16 +80,33 @@ pub fn main_4_10_2() {
         // generate a large list of semi-random model transformation matrices
         // ------------------------------------------------------------------
         let amount = 1000;
-        let modelMatrices: Vec<Matrix4<f32>> = Vec::with_capacity(1000);
-        // TODO!!: seed random generator
-        // srand(glfwGetTime()); // initialize random seed
+        let mut modelMatrices: Vec<Matrix4<f32>> = Vec::with_capacity(amount);
+        let mut rng = rand::thread_rng();
         let radius = 50.0;
-        let offset = 2.5;
-        for i in (0..amount) {
-            // TODO!!!
+        let offset: f32 = 2.5;
+        for i in 0..amount {
+            let angle = i as i32 as f32 / amount as f32 * 360.0;
+            let mut displacement = (rng.gen::<i32>() % (2.0 * offset * 100.0) as i32) as f32 / 100.0 - offset;
+            let x = angle.sin() * radius + displacement;
+            displacement = (rng.gen::<i32>() % (2.0 * offset * 100.0) as i32) as f32 / 100.0 - offset;
+            let y = displacement * 0.4; // keep height of asteroid field smaller compared to width of x and z
+            displacement = (rng.gen::<i32>() % (2.0 * offset * 100.0) as i32) as f32 / 100.0 - offset;
+            let z = angle.cos() * radius + displacement;
+            let mut model = Matrix4::<f32>::from_translation(vec3(x, y, z));
+
+            // 2. scale: Scale between 0.05 and 0.25
+            let scale = (rng.gen::<i32>() % 20) as f32 / 100.0 + 0.05;
+            model = model * Matrix4::from_scale(scale);
+
+            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+            let rotAngle = (rng.gen::<i32>() % 360) as f32;
+            model = model * Matrix4::from_axis_angle(vec3(0.4, 0.6, 0.8).normalize(), Deg(rotAngle));
+
+            // 4. now add to list of matrices
+            modelMatrices.push(model);
         }
 
-        (shader, rock, planet)
+        (shader, rock, planet, modelMatrices)
     };
 
     // render loop
@@ -112,20 +132,24 @@ pub fn main_4_10_2() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // don't forget to enable shader before setting uniforms
-            shader.useProgram();
-
-            // view/projection transformations
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 100.0);
+            // configure transformation matrices
+            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 1000.0);
             let view = camera.GetViewMatrix();
+            shader.useProgram();
             shader.setMat4(c_str!("projection"), &projection);
             shader.setMat4(c_str!("view"), &view);
 
-            // render the loaded model
-            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, -1.75, 0.0)); // translate it down so it's at the center of the scene
-            model = model * Matrix4::from_scale(0.2);  // it's a bit too big for our scene, so scale it down
+            // draw planet
+            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, -3.0, 0.0));
+            model = model * Matrix4::from_scale(4.0);
             shader.setMat4(c_str!("model"), &model);
-            rock.Draw(&shader);
+            planet.Draw(&shader);
+
+            // draw meteorites
+            for model in &modelMatrices {
+                shader.setMat4(c_str!("model"), &model);
+                rock.Draw(&shader);
+            }
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
