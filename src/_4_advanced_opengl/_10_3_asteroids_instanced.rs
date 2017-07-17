@@ -17,17 +17,16 @@ use shader::Shader;
 use camera::Camera;
 use model::Model;
 
-use cgmath::{Matrix4, vec3, Point3, Deg, perspective};
+use cgmath::{Matrix4, vec3, Point3, Vector4, Deg, perspective};
 use cgmath::prelude::*;
 
 // settings
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!: started as copy of 4.10.2
 pub fn main_4_10_3() {
     let mut camera = Camera {
-        Position: Point3::new(0.0, 0.0, 55.0),
+        Position: Point3::new(0.0, 0.0, 155.0),
         ..Camera::default()
     };
 
@@ -127,19 +126,20 @@ pub fn main_4_10_3() {
         // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
         // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
         // -----------------------------------------------------------------------------------------------------------------------------------
+        let size_mat4 = mem::size_of::<Matrix4<f32>>() as i32;
+        let size_vec4 = mem::size_of::<Vector4<f32>>() as i32;
         for mesh in &rock.meshes {
             let VAO = mesh.VAO;
             gl::BindVertexArray(VAO);
             // set attribute pointers for matrix (4 times vec4)
-            let size = mem::size_of::<Matrix4<f32>>() as i32;
             gl::EnableVertexAttribArray(3);
-            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, size, ptr::null());
+            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, size_mat4, ptr::null());
             gl::EnableVertexAttribArray(4);
-            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, size, size as *const c_void);
+            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, size_mat4, size_vec4 as *const c_void);
             gl::EnableVertexAttribArray(5);
-            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, size, (2 * size) as *const c_void);
+            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, size_mat4, (2 * size_vec4) as *const c_void);
             gl::EnableVertexAttribArray(6);
-            gl::VertexAttribPointer(6, 4, gl::FLOAT, gl::FALSE, size, (3 * size) as *const c_void);
+            gl::VertexAttribPointer(6, 4, gl::FLOAT, gl::FALSE, size_mat4, (3 * size_vec4) as *const c_void);
 
             gl::VertexAttribDivisor(3, 1);
             gl::VertexAttribDivisor(4, 1);
@@ -148,7 +148,6 @@ pub fn main_4_10_3() {
 
             gl::BindVertexArray(0);
         }
-
 
         (asteroidShader, planetShader, rock, planet, amount)
     };
@@ -177,11 +176,12 @@ pub fn main_4_10_3() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             // configure transformation matrices
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 1000.0);
+            let projection: Matrix4<f32> = perspective(Deg(45.0), SCR_WIDTH as f32 / SCR_HEIGHT as f32, 0.1, 1000.0);
             let view = camera.GetViewMatrix();
             asteroidShader.useProgram();
             asteroidShader.setMat4(c_str!("projection"), &projection);
             asteroidShader.setMat4(c_str!("view"), &view);
+            planetShader.useProgram();
             planetShader.setMat4(c_str!("projection"), &projection);
             planetShader.setMat4(c_str!("view"), &view);
 
@@ -200,7 +200,7 @@ pub fn main_4_10_3() {
             for mesh in &rock.meshes {
                 gl::BindVertexArray(mesh.VAO);
                 gl::DrawElementsInstanced(gl::TRIANGLES, mesh.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), amount as i32);
-
+                gl::BindVertexArray(0);
             }
         }
 

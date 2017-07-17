@@ -26,8 +26,6 @@ mod _10_1_instancing_quads;
 pub use self::_10_1_instancing_quads::*;
 mod _10_2_asteroids;
 pub use self::_10_2_asteroids::*;
-// mod _10_3_asteroids_instanced;
-// pub use self::_10_3_asteroids_instanced::*;
 mod _10_3_asteroids_instanced;
 pub use self::_10_3_asteroids_instanced::*;
 // mod _11_anti_aliasing_offscreen;
