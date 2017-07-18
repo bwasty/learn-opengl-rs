@@ -30,3 +30,5 @@ mod _10_3_asteroids_instanced;
 pub use self::_10_3_asteroids_instanced::*;
 // mod _11_anti_aliasing_offscreen;
 // pub use self::_10_1_instancing_quads::*;
+mod _11_anti_aliasing_offscreen;
+pub use self::_11_anti_aliasing_offscreen::*;
