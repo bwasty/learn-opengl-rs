@@ -7,7 +7,7 @@ You should be able to follow the tutorials at https://learnopengl.com/ with this
 Run individual tutorials like this:
 `cargo run 1_3_2` (for `/src/_1_getting_started/_3_2_shaders_interpolation.rs`).
 
-For reduced compilation times, you may only compile a the code for a certain chapter, by adding `--no-default-features --features chapter-1` for example.
+For reduced compilation times, you may only compile the code for a certain chapter, by adding `--no-default-features --features chapter-1` for example.
 <p align="center">
 <img width="250" alt="1_3_2" title="1_3_2 Hello Triangle" src="https://user-images.githubusercontent.com/1647415/27755053-d5cd0f5a-5ded-11e7-99b4-abd4e3bb8638.png"><img width="250" alt="2_6" title="2_6 Multiple Lights" src="https://user-images.githubusercontent.com/1647415/27755102-fd217078-5ded-11e7-96f6-efdeb9ffdcac.png"><img width="250" alt="3_1" title="3_1 Model Loading"src="https://user-images.githubusercontent.com/1647415/27755660-52df4104-5df1-11e7-800c-45a514bf3130.png">
 </p>
@@ -19,31 +19,26 @@ For reduced compilation times, you may only compile a the code for a certain cha
 
 ## Chapters
 ### [1. Getting started](src/_1_getting_started)
-**Status:** complete*
-
 **Notes**
 - You can mostly ignore the setup instructions at [Getting-started/Creating-a-window](https://learnopengl.com/#!Getting-started/Creating-a-window). Just create a new project with `cargo` and copy the dependencies section from [Cargo.toml](Cargo.toml). Only `glfw-rs` might need some more setup, see [here](https://github.com/PistonDevelopers/glfw-rs#using-glfw-rs) for details. You can also use [glutin](https://github.com/tomaka/glutin) (a pure Rust alternative to GLFW), but the API is a bit different, so following the tutorials might not be as straight-forward.
 - You might be tempted to use [glium](https://github.com/glium/glium) instead of raw OpenGL. I'd recommend against that, at least in the beginning, to get a good understanding of how OpenGL really works. Also, glium is not actively maintained at the moment.
+- If you experience black screens or weird rendering artifacts, check out the [`glCheckError!`](https://github.com/bwasty/learn-opengl-rs/blob/89aed9919a2347e49965820830a6aecfdda18cf3/src/_7_in_practice/_1_debugging.rs#L28-L53) macro from chapter 7.
 
 ### [2. Lighting](src/_2_lighting)
-**Status:** complete*
-
 ### [3. Model loading](src/_3_model_loading)
-**Status:** complete
-
 **Notes**
 - For simplicity `tobj` is used instead of `assimp` (simpler interface, pure Rust and later tutorials only load OBJ files anyway). For alternatives see [here](http://arewegameyet.com/categories/3dformatloader.html) and [here](https://crates.io/search?q=assimp).
 - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
-**Status:** complete
+### 5. Advanced Lighting
+**Status:** TODO
+### 6. PBR
+**Status:** TODO
 ### [7. In Practice](src/_7_in_practice)
 **Status:** `Debugging` complete (the other two are not in the repo)
 
-### TODO
-### 5. Advanced Lighting
-### 6. PBR
-
 ----
+
 \* exercises mostly omitted. You can look up the solutions in the original C++ source.
 
 ----
