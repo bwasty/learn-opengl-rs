@@ -31,6 +31,12 @@ mod _4_advanced_opengl;
 #[cfg(feature = "chapter-4")]
 use _4_advanced_opengl::*;
 
+#[cfg(feature = "chapter-5")]
+mod _5_advanced_lighting;
+#[cfg(feature = "chapter-5")]
+use _5_advanced_lighting::*;
+
+
 #[cfg(feature = "chapter-7")]
 mod _7_in_practice;
 #[cfg(feature = "chapter-7")]
@@ -96,6 +102,8 @@ fn main() {
         #[cfg(feature = "chapter-4")] "4_10_2" => main_4_10_2(),
         #[cfg(feature = "chapter-4")] "4_10_3" => main_4_10_3(),
         #[cfg(feature = "chapter-4")] "4_11" => main_4_11(),
+
+        #[cfg(feature = "chapter-5")] "5_1" => main_5_1(),
 
         #[cfg(feature = "chapter-7")] "7_1" => main_7_1(),
 
