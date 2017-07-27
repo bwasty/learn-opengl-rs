@@ -2,7 +2,7 @@
 #![allow(non_snake_case)]
 
 extern crate glfw;
-use self::glfw::Context;
+use self::glfw::{Context, Key, Action};
 
 extern crate gl;
 use self::gl::types::*;
@@ -12,9 +12,10 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ffi::CStr;
 
-use common::{process_events, processInput, loadTexture};
+use common::{process_events, loadTexture};
 use shader::Shader;
 use camera::Camera;
+use camera::Camera_Movement::*;
 
 use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
 use cgmath::prelude::*;
@@ -23,8 +24,10 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!!: copied from 4_1_1
 pub fn main_5_1() {
+    let mut blinn = false;
+    let mut blinnKeyPressed = false;
+
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -116,10 +119,12 @@ pub fn main_5_1() {
         shader.useProgram();
         shader.setInt(c_str!("texture1"), 0);
 
-        // TODO!!!
-
         (shader, planeVBO, planeVAO, floorTexture)
     };
+
+    // lighting info
+    // -------------
+    let lightPos = vec3(0.0, 0.0, 0.0);
 
     // render loop
     // -----------
@@ -136,7 +141,7 @@ pub fn main_5_1() {
 
         // input
         // -----
-        processInput(&mut window, deltaTime, &mut camera);
+        processInput(&mut window, deltaTime, &mut camera, &mut blinn, &mut blinnKeyPressed);
 
         // render
         // ------
@@ -144,19 +149,21 @@ pub fn main_5_1() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
+            // draw objects
             shader.useProgram();
-            let model: Matrix4<f32>;
-            let view = camera.GetViewMatrix();
             let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
-            shader.setMat4(c_str!("view"), &view);
+            let view = camera.GetViewMatrix();
             shader.setMat4(c_str!("projection"), &projection);
-            gl::DrawArrays(gl::TRIANGLES, 0, 36);
+            shader.setMat4(c_str!("view"), &view);
+            // set light uniforms
+            shader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
+            shader.setVector3(c_str!("lightPos"), &lightPos);
+            shader.setInt(c_str!("blinn"), blinn as i32);
             // floor
             gl::BindVertexArray(planeVAO);
+            gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, floorTexture);
-            shader.setMat4(c_str!("model"), &Matrix4::identity());
             gl::DrawArrays(gl::TRIANGLES, 0, 6);
-            gl::BindVertexArray(0);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -170,5 +177,34 @@ pub fn main_5_1() {
     unsafe {
         gl::DeleteVertexArrays(1, &planeVAO);
         gl::DeleteBuffers(1, &planeVBO);
+    }
+}
+
+// NOTE: not the same version as in common.rs
+pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera, blinn: &mut bool, blinnKeyPressed: &mut bool) {
+    if window.get_key(Key::Escape) == Action::Press {
+        window.set_should_close(true)
+    }
+
+    if window.get_key(Key::W) == Action::Press {
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+    if window.get_key(Key::S) == Action::Press {
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+    if window.get_key(Key::A) == Action::Press {
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    }
+    if window.get_key(Key::D) == Action::Press {
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
+
+    if window.get_key(Key::B) == Action::Press && !(*blinnKeyPressed) {
+        *blinn = !(*blinn);
+        *blinnKeyPressed = true;
+        println!("{}", if *blinn { "Blinn-Phong" } else { "Phong" })
+    }
+    if window.get_key(Key::B) == Action::Release {
+        *blinnKeyPressed = false;
     }
 }
