@@ -2,7 +2,7 @@
 #![allow(non_snake_case)]
 
 extern crate glfw;
-use self::glfw::{Context, Key, Action};
+use self::glfw::Context;
 
 extern crate gl;
 use self::gl::types::*;
@@ -10,17 +10,11 @@ use self::gl::types::*;
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
-use std::path::Path;
 use std::ffi::CStr;
-
-use image;
-use image::GenericImage;
-use image::DynamicImage::*;
 
 use common::{process_events, processInput, loadTexture};
 use shader::Shader;
 use camera::Camera;
-use camera::Camera_Movement::*;
 
 use cgmath::{Matrix4, vec3, Vector3, vec2, Vector2, Deg, perspective, Point3};
 use cgmath::prelude::*;
@@ -29,7 +23,6 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!!: copied from 5.2
 pub fn main_5_4() {
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
@@ -157,7 +150,7 @@ pub fn main_5_4() {
 
 // renders a 1x1 quad in NDC with manually calculated tangent vectors
 // ------------------------------------------------------------------
-fn renderQuad(quadVAO: &mut u32, quadVBO: &mut u32) {
+unsafe fn renderQuad(quadVAO: &mut u32, quadVBO: &mut u32) {
     if *quadVAO == 0 {
         // positions
         let pos1: Vector3<f32> = vec3(-1.0,  1.0, 0.0);
@@ -215,6 +208,41 @@ fn renderQuad(quadVAO: &mut u32, quadVBO: &mut u32) {
         bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
         bitangent2 = bitangent2.normalize();
 
-        // TODO!!!
+        let quadVertices: [f32; 84] = [
+            // positions            // normal         // texcoords  // tangent                          // bitangent
+            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+
+            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+        ];
+
+        // configure plane VAO
+        gl::GenVertexArrays(1, quadVAO);
+        gl::GenBuffers(1, quadVBO);
+        gl::BindVertexArray(*quadVAO);
+        gl::BindBuffer(gl::ARRAY_BUFFER, *quadVBO);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (quadVertices.len() * mem::size_of::<f32>()) as isize,
+            &quadVertices[0] as *const f32 as *const c_void,
+            gl::STATIC_DRAW);
+        let stride = 14 * mem::size_of::<GLfloat>() as GLsizei;
+        gl::EnableVertexAttribArray(0);
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        gl::EnableVertexAttribArray(1);
+        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(2);
+        gl::VertexAttribPointer(2, 2, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(3);
+        gl::VertexAttribPointer(3, 3, gl::FLOAT, gl::FALSE, stride, (8 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(4);
+        gl::VertexAttribPointer(4, 3, gl::FLOAT, gl::FALSE, stride, (11 * mem::size_of::<GLfloat>()) as *const c_void);
     }
+
+    gl::BindVertexArray(*quadVAO);
+    gl::DrawArrays(gl::TRIANGLES, 0, 6);
+    gl::BindVertexArray(0);
 }
