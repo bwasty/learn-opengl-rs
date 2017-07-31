@@ -146,7 +146,7 @@ pub fn main_4_10_2() {
 
             // draw meteorites
             for model in &modelMatrices {
-                shader.setMat4(c_str!("model"), &model);
+                shader.setMat4(c_str!("model"), model);
                 rock.Draw(&shader);
             }
         }

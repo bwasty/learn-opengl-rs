@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(dead_code)]
 /// Common code that the original tutorials repeat over and over and over and over
 
 use std::os::raw::c_void;
@@ -17,7 +18,7 @@ use camera::Camera;
 use camera::Camera_Movement::*;
 
 /// Event processing function as introduced in 1.7.4 (Camera Class) and used in
-/// all later tutorials
+/// most later tutorials
 pub fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>,
                   firstMouse: &mut bool,
                   lastX: &mut f32,
@@ -55,7 +56,7 @@ pub fn process_events(events: &Receiver<(f64, glfw::WindowEvent)>,
 }
 
 /// Input processing function as introduced in 1.7.4 (Camera Class) and used in
-/// all later tutorials
+/// most later tutorials
 pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera) {
     if window.get_key(Key::Escape) == Action::Press {
         window.set_should_close(true)

@@ -33,7 +33,9 @@ For reduced compilation times, you may only compile the code for a certain chapt
 - The `image` crate is quite slow in debug mode - loading the nanosuit textures takes so much time that it can be faster to use release mode (including compile time).
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
 ### 5. Advanced Lighting
-**Status:** WIP; already done: `Advanced Lighting` (Blinn-Phong)
+**Status:** WIP; already done:
+- `Advanced Lighting` (Blinn-Phong)
+- `Gamma Correction`
 ### 6. PBR
 **Status:** TODO
 ### [7. In Practice](src/_7_in_practice)

@@ -10,24 +10,28 @@ use self::gl::types::*;
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
+use std::path::Path;
 use std::ffi::CStr;
 
-use common::{process_events, loadTexture};
+use image;
+use image::GenericImage;
+use image::DynamicImage::*;
+
+use common::process_events;
 use shader::Shader;
 use camera::Camera;
 use camera::Camera_Movement::*;
 
-use cgmath::{Matrix4, vec3,  Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3, Vector3, Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!!: copied from 5.1
 pub fn main_5_2() {
-    let mut blinn = false;
-    let mut blinnKeyPressed = false;
+    let mut gammaEnabled = false;
+    let mut gammaKeyPressed = false;
 
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
@@ -67,7 +71,7 @@ pub fn main_5_2() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, planeVBO, planeVAO, floorTexture) = unsafe {
+    let (shader, planeVBO, planeVAO, floorTexture, floorTextureGammaCorrected) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -77,8 +81,8 @@ pub fn main_5_2() {
         // build and compile shaders
         // ------------------------------------
         let shader = Shader::new(
-            "src/_5_advanced_lighting/shaders/1.advanced_lighting.vs",
-            "src/_5_advanced_lighting/shaders/1.advanced_lighting.fs");
+            "src/_5_advanced_lighting/shaders/2.gamma_correction.vs",
+            "src/_5_advanced_lighting/shaders/2.gamma_correction.fs");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -113,19 +117,31 @@ pub fn main_5_2() {
 
         // load textures
         // -------------
-        let floorTexture = loadTexture("resources/textures/wood.png");
+        let floorTexture = loadTexture("resources/textures/wood.png", false);
+        let floorTextureGammaCorrected = loadTexture("resources/textures/wood.png", true);
 
         // shader configuration
         // --------------------
         shader.useProgram();
-        shader.setInt(c_str!("texture1"), 0);
+        shader.setInt(c_str!("floorTexture"), 0);
 
-        (shader, planeVBO, planeVAO, floorTexture)
+        (shader, planeVBO, planeVAO, floorTexture, floorTextureGammaCorrected)
     };
 
     // lighting info
     // -------------
-    let lightPos = vec3(0.0, 0.0, 0.0);
+    let lightPositions: [Vector3<f32>; 4] = [
+        vec3(-3.0, 0.0, 0.0),
+        vec3(-1.0, 0.0, 0.0),
+        vec3 (1.0, 0.0, 0.0),
+        vec3 (3.0, 0.0, 0.0)
+    ];
+    let lightColors: [Vector3<f32>; 4] = [
+        vec3(0.25, 0.25, 0.25),
+        vec3(0.50, 0.50, 0.50),
+        vec3(0.75, 0.75, 0.75),
+        vec3(1.00, 1.00, 1.00)
+    ];
 
     // render loop
     // -----------
@@ -142,7 +158,7 @@ pub fn main_5_2() {
 
         // input
         // -----
-        processInput(&mut window, deltaTime, &mut camera, &mut blinn, &mut blinnKeyPressed);
+        processInput(&mut window, deltaTime, &mut camera, &mut gammaEnabled, &mut gammaKeyPressed);
 
         // render
         // ------
@@ -157,13 +173,20 @@ pub fn main_5_2() {
             shader.setMat4(c_str!("projection"), &projection);
             shader.setMat4(c_str!("view"), &view);
             // set light uniforms
+            shader.setVector3(c_str!("lightPositions[0]"), &lightPositions[0]);
+            shader.setVector3(c_str!("lightPositions[1]"), &lightPositions[1]);
+            shader.setVector3(c_str!("lightPositions[2]"), &lightPositions[2]);
+            shader.setVector3(c_str!("lightPositions[3]"), &lightPositions[3]);
+            shader.setVector3(c_str!("lightColors[0]"), &lightColors[0]);
+            shader.setVector3(c_str!("lightColors[1]"), &lightColors[1]);
+            shader.setVector3(c_str!("lightColors[2]"), &lightColors[2]);
+            shader.setVector3(c_str!("lightColors[3]"), &lightColors[3]);
             shader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
-            shader.setVector3(c_str!("lightPos"), &lightPos);
-            shader.setInt(c_str!("blinn"), blinn as i32);
+            shader.setBool(c_str!("gamma"), gammaEnabled);
             // floor
             gl::BindVertexArray(planeVAO);
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, floorTexture);
+            gl::BindTexture(gl::TEXTURE_2D, if gammaEnabled { floorTextureGammaCorrected } else { floorTexture });
             gl::DrawArrays(gl::TRIANGLES, 0, 6);
         }
 
@@ -182,7 +205,7 @@ pub fn main_5_2() {
 }
 
 // NOTE: not the same version as in common.rs
-pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera, blinn: &mut bool, blinnKeyPressed: &mut bool) {
+pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera, gammaEnabled: &mut bool, gammaKeyPressed: &mut bool) {
     if window.get_key(Key::Escape) == Action::Press {
         window.set_should_close(true)
     }
@@ -200,12 +223,41 @@ pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Came
         camera.ProcessKeyboard(RIGHT, deltaTime);
     }
 
-    if window.get_key(Key::B) == Action::Press && !(*blinnKeyPressed) {
-        *blinn = !(*blinn);
-        *blinnKeyPressed = true;
-        println!("{}", if *blinn { "Blinn-Phong" } else { "Phong" })
+    if window.get_key(Key::Space) == Action::Press && !(*gammaKeyPressed) {
+        *gammaEnabled = !(*gammaEnabled);
+        *gammaKeyPressed = true;
+        println!("{}", if *gammaEnabled { "Gamma Enabled" } else { "Gamma disabled" })
     }
-    if window.get_key(Key::B) == Action::Release {
-        *blinnKeyPressed = false;
+    if window.get_key(Key::Space) == Action::Release {
+        *gammaKeyPressed = false;
     }
+}
+
+// NOTE: not the same version as in common.rs
+pub unsafe fn loadTexture(path: &str, gammaCorrection: bool) -> u32 {
+    let mut textureID = 0;
+
+    gl::GenTextures(1, &mut textureID);
+    let img = image::open(&Path::new(path)).expect("Texture failed to load");
+    // need two different formats for gamma correction
+    let (internalFormat, dataFormat) = match img {
+        ImageLuma8(_) => (gl::RED, gl::RED),
+        ImageLumaA8(_) => (gl::RG, gl::RG),
+        ImageRgb8(_) => (if gammaCorrection { gl::SRGB } else { gl::RGB }, gl::RGB),
+        ImageRgba8(_) => (if gammaCorrection { gl::SRGB_ALPHA } else { gl::RGB }, gl::RGBA),
+    };
+
+    let data = img.raw_pixels();
+
+    gl::BindTexture(gl::TEXTURE_2D, textureID);
+    gl::TexImage2D(gl::TEXTURE_2D, 0, internalFormat as i32, img.width() as i32, img.height() as i32,
+        0, dataFormat, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
+    gl::GenerateMipmap(gl::TEXTURE_2D);
+
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+    textureID
 }
