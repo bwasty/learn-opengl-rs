@@ -22,14 +22,13 @@ use shader::Shader;
 use camera::Camera;
 use camera::Camera_Movement::*;
 
-use cgmath::{Matrix4, vec3, Vector3, vec2, Vector2, Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3, Vector3, Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!!: copied from 5.4
 pub fn main_5_6() {
     let mut hdr = true;
     let mut hdrKeyPressed = false;
@@ -73,7 +72,9 @@ pub fn main_5_6() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, hdrShader, woodTexture, hdrFBO, lightPositions, lightColors) = unsafe {
+    let mut cubeVAO = 0;
+    let mut cubeVBO = 0;
+    let (shader, hdrShader, woodTexture, hdrFBO, colorBuffer, lightPositions, lightColors) = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -121,13 +122,13 @@ pub fn main_5_6() {
         // lighting info
         // -------------
         // positions
-        let lightPositions: Vec<Vector3<f32>> = Vec::new();
+        let mut lightPositions: Vec<Vector3<f32>> = Vec::new();
         lightPositions.push(vec3( 0.0,  0.0, 49.5)); // back light
         lightPositions.push(vec3(-1.4, -1.9, 9.0));
         lightPositions.push(vec3( 0.0, -1.8, 4.0));
         lightPositions.push(vec3( 0.8, -1.7, 6.0));
         // colors
-        let lightColors: Vec<Vector3<f32>> = Vec::new();
+        let mut lightColors: Vec<Vector3<f32>> = Vec::new();
         lightColors.push(vec3(200.0, 200.0, 200.0));
         lightColors.push(vec3(0.1, 0.0, 0.0));
         lightColors.push(vec3(0.0, 0.0, 0.2));
@@ -140,12 +141,8 @@ pub fn main_5_6() {
         hdrShader.useProgram();
         hdrShader.setInt(c_str!("hdrBuffer"), 0);
 
-        (shader, hdrShader, woodTexture, hdrFBO, lightPositions, lightColors)
+        (shader, hdrShader, woodTexture, hdrFBO, colorBuffer, lightPositions, lightColors)
     };
-
-    // lighting info
-    // -------------
-    let lightPos: Vector3<f32> = vec3(0.5, 1.0, 0.3);
 
     let mut quadVAO = 0;
     let mut quadVBO = 0;
@@ -187,7 +184,7 @@ pub fn main_5_6() {
                 // set lighting uniforms
                 for (i, lightPos) in lightPositions.iter().enumerate() {
                     let name = CString::new(format!("lights[{}].Position", i)).unwrap();
-                    shader.setVector3(&name, &lightPos);
+                    shader.setVector3(&name, lightPos);
                     let name = CString::new(format!("lights[{}].Color", i)).unwrap();
                     shader.setVector3(&name, &lightColors[i]);
                 }
@@ -197,13 +194,18 @@ pub fn main_5_6() {
                 model = model * Matrix4::from_nonuniform_scale(2.5, 2.5, 27.5);
                 shader.setMat4(c_str!("model"), &model);
                 shader.setBool(c_str!("inverse_normals"), true);
-                renderCube();
+                renderCube(&mut cubeVAO, &mut cubeVBO);
             gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
 
             // 2. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
             // --------------------------------------------------------------------------------------------------------------------------
-
-
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            hdrShader.useProgram();
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, colorBuffer);
+            hdrShader.setBool(c_str!("hdr"), hdr);
+            hdrShader.setFloat(c_str!("exposure"), exposure);
+            renderQuad(&mut quadVAO, &mut quadVBO);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -213,78 +215,92 @@ pub fn main_5_6() {
     }
 }
 
+// renderCube() renders a 1x1 3D cube in NDC.
+// -------------------------------------------------
+unsafe fn renderCube(cubeVAO: &mut u32, cubeVBO: &mut u32) {
+    if *cubeVAO == 0 {
+        let vertices: [f32; 288] = [
+            // back face
+            -1.0, -1.0, -1.0,  0.0,  0.0, -1.0, 0.0, 0.0, // bottom-left
+             1.0,  1.0, -1.0,  0.0,  0.0, -1.0, 1.0, 1.0, // top-right
+             1.0, -1.0, -1.0,  0.0,  0.0, -1.0, 1.0, 0.0, // bottom-right
+             1.0,  1.0, -1.0,  0.0,  0.0, -1.0, 1.0, 1.0, // top-right
+            -1.0, -1.0, -1.0,  0.0,  0.0, -1.0, 0.0, 0.0, // bottom-left
+            -1.0,  1.0, -1.0,  0.0,  0.0, -1.0, 0.0, 1.0, // top-left
+            // front face
+            -1.0, -1.0,  1.0,  0.0,  0.0,  1.0, 0.0, 0.0, // bottom-left
+             1.0, -1.0,  1.0,  0.0,  0.0,  1.0, 1.0, 0.0, // bottom-right
+             1.0,  1.0,  1.0,  0.0,  0.0,  1.0, 1.0, 1.0, // top-right
+             1.0,  1.0,  1.0,  0.0,  0.0,  1.0, 1.0, 1.0, // top-right
+            -1.0,  1.0,  1.0,  0.0,  0.0,  1.0, 0.0, 1.0, // top-left
+            -1.0, -1.0,  1.0,  0.0,  0.0,  1.0, 0.0, 0.0, // bottom-left
+            // left face
+            -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, 1.0, 0.0, // top-right
+            -1.0,  1.0, -1.0, -1.0,  0.0,  0.0, 1.0, 1.0, // top-left
+            -1.0, -1.0, -1.0, -1.0,  0.0,  0.0, 0.0, 1.0, // bottom-left
+            -1.0, -1.0, -1.0, -1.0,  0.0,  0.0, 0.0, 1.0, // bottom-left
+            -1.0, -1.0,  1.0, -1.0,  0.0,  0.0, 0.0, 0.0, // bottom-right
+            -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, 1.0, 0.0, // top-right
+            // right face
+             1.0,  1.0,  1.0,  1.0,  0.0,  0.0, 1.0, 0.0, // top-left
+             1.0, -1.0, -1.0,  1.0,  0.0,  0.0, 0.0, 1.0, // bottom-right
+             1.0,  1.0, -1.0,  1.0,  0.0,  0.0, 1.0, 1.0, // top-right
+             1.0, -1.0, -1.0,  1.0,  0.0,  0.0, 0.0, 1.0, // bottom-right
+             1.0,  1.0,  1.0,  1.0,  0.0,  0.0, 1.0, 0.0, // top-left
+             1.0, -1.0,  1.0,  1.0,  0.0,  0.0, 0.0, 0.0, // bottom-left
+            // bottom face
+            -1.0, -1.0, -1.0,  0.0, -1.0,  0.0, 0.0, 1.0, // top-right
+             1.0, -1.0, -1.0,  0.0, -1.0,  0.0, 1.0, 1.0, // top-left
+             1.0, -1.0,  1.0,  0.0, -1.0,  0.0, 1.0, 0.0, // bottom-left
+             1.0, -1.0,  1.0,  0.0, -1.0,  0.0, 1.0, 0.0, // bottom-left
+            -1.0, -1.0,  1.0,  0.0, -1.0,  0.0, 0.0, 0.0, // bottom-right
+            -1.0, -1.0, -1.0,  0.0, -1.0,  0.0, 0.0, 1.0, // top-right
+            // top face
+            -1.0,  1.0, -1.0,  0.0,  1.0,  0.0, 0.0, 1.0, // top-left
+             1.0,  1.0, 1.0,  0.0,  1.0,  0.0, 1.0, 0.0, // bottom-right
+             1.0,  1.0, -1.0,  0.0,  1.0,  0.0, 1.0, 1.0, // top-right
+             1.0,  1.0,  1.0,  0.0,  1.0,  0.0, 1.0, 0.0, // bottom-right
+            -1.0,  1.0, -1.0,  0.0,  1.0,  0.0, 0.0, 1.0, // top-left
+            -1.0,  1.0,  1.0,  0.0,  1.0,  0.0, 0.0, 0.0,  // bottom-left
+        ];
+        gl::GenVertexArrays(1, cubeVAO);
+        gl::GenBuffers(1, cubeVBO);
+        // fill buffer
+        gl::BindBuffer(gl::ARRAY_BUFFER, *cubeVBO);
+        let size = (vertices.len() * mem::size_of::<f32>()) as isize;
+        let data = &vertices[0] as *const f32 as *const c_void;
+        gl::BufferData(gl::ARRAY_BUFFER, size, data, gl::STATIC_DRAW);
+        // link vertex attributes
+        gl::BindVertexArray(*cubeVAO);
+        let stride = 8 * mem::size_of::<GLfloat>() as GLsizei;
+        gl::EnableVertexAttribArray(0);
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        gl::EnableVertexAttribArray(1);
+        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(2);
+        gl::VertexAttribPointer(2, 2, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+        gl::BindVertexArray(0);
+    }
+    // render Cube
+    gl::BindVertexArray(*cubeVAO);
+    gl::DrawArrays(gl::TRIANGLES, 0, 36);
+    gl::BindVertexArray(0);
+}
+
 // renders a 1x1 quad in NDC with manually calculated tangent vectors
 // ------------------------------------------------------------------
 unsafe fn renderQuad(quadVAO: &mut u32, quadVBO: &mut u32) {
     if *quadVAO == 0 {
-        // positions
-        let pos1: Vector3<f32> = vec3(-1.0,  1.0, 0.0);
-        let pos2: Vector3<f32> = vec3(-1.0, -1.0, 0.0);
-        let pos3: Vector3<f32> = vec3( 1.0, -1.0, 0.0);
-        let pos4: Vector3<f32> = vec3( 1.0,  1.0, 0.0);
-        // texture coordinates
-        let uv1: Vector2<f32> = vec2(0.0, 1.0);
-        let uv2: Vector2<f32> = vec2(0.0, 0.0);
-        let uv3: Vector2<f32> = vec2(1.0, 0.0);
-        let uv4: Vector2<f32> = vec2(1.0, 1.0);
-        // normal vector
-        let nm: Vector3<f32> = vec3(0.0, 0.0, 1.0);
-
-        // calculate tangent/bitangent vectors of both triangles
-        let mut tangent1: Vector3<f32> = vec3(0.0, 0.0, 0.0);
-        let mut bitangent1: Vector3<f32> = vec3(0.0, 0.0, 0.0);
-        let mut tangent2: Vector3<f32> = vec3(0.0, 0.0, 0.0);;
-        let mut bitangent2: Vector3<f32> = vec3(0.0, 0.0, 0.0);
-        // triangle 1
-        // ----------
-        let mut edge1 = pos2 - pos1;
-        let mut edge2 = pos3 - pos1;
-        let mut deltaUV1 = uv2 - uv1;
-        let mut deltaUV2 = uv3 - uv1;
-
-        let mut f = 1.0 / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-        tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-        tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-        tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-        tangent1 = tangent1.normalize();
-
-        bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-        bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-        bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-        bitangent1 = bitangent1.normalize();
-
-        // triangle 2
-        // ----------
-        edge1 = pos3 - pos1;
-        edge2 = pos4 - pos1;
-        deltaUV1 = uv3 - uv1;
-        deltaUV2 = uv4 - uv1;
-
-        f = 1.0 / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-        tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-        tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-        tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-        tangent2 = tangent2.normalize();
-
-        bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-        bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-        bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-        bitangent2 = bitangent2.normalize();
-
-        let quadVertices: [f32; 84] = [
-            // positions            // normal         // texcoords  // tangent                          // bitangent
-            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-
-            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
-            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
-            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+        let quadVertices: [f32; 20] = [
+            // positions     // texture Coords
+            -1.0,  1.0, 0.0, 0.0, 1.0,
+            -1.0, -1.0, 0.0, 0.0, 0.0,
+             1.0,  1.0, 0.0, 1.0, 1.0,
+             1.0, -1.0, 0.0, 1.0, 0.0,
         ];
 
-        // configure plane VAO
+        // setup plane VAO
         gl::GenVertexArrays(1, quadVAO);
         gl::GenBuffers(1, quadVBO);
         gl::BindVertexArray(*quadVAO);
@@ -294,21 +310,14 @@ unsafe fn renderQuad(quadVAO: &mut u32, quadVBO: &mut u32) {
             (quadVertices.len() * mem::size_of::<f32>()) as isize,
             &quadVertices[0] as *const f32 as *const c_void,
             gl::STATIC_DRAW);
-        let stride = 14 * mem::size_of::<GLfloat>() as GLsizei;
+        let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
         gl::EnableVertexAttribArray(0);
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
         gl::EnableVertexAttribArray(1);
-        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::EnableVertexAttribArray(2);
-        gl::VertexAttribPointer(2, 2, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::EnableVertexAttribArray(3);
-        gl::VertexAttribPointer(3, 3, gl::FLOAT, gl::FALSE, stride, (8 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::EnableVertexAttribArray(4);
-        gl::VertexAttribPointer(4, 3, gl::FLOAT, gl::FALSE, stride, (11 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
     }
-
     gl::BindVertexArray(*quadVAO);
-    gl::DrawArrays(gl::TRIANGLES, 0, 6);
+    gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
     gl::BindVertexArray(0);
 }
 
@@ -345,15 +354,15 @@ pub fn processInput(
 
     if window.get_key(Key::Q) == Action::Press {
         if *exposure > 0.0 {
-            *exposure -= 0.001;
+            *exposure -= 0.01;
         }
         else {
             *exposure = 0.0;
         }
         println!("hdr: {} | exposure: {}", if *hdr { "on" } else { "off" }, *exposure);
     }
-    if window.get_key(Key::E) == Action::Release {
-        *exposure += 0.001;
+    if window.get_key(Key::E) == Action::Press {
+        *exposure += 0.01;
         println!("hdr: {} | exposure: {}", if *hdr { "on" } else { "off" }, *exposure);
     }
 }
