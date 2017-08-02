@@ -7,22 +7,24 @@ use self::glfw::{Context, Key, Action};
 extern crate gl;
 use self::gl::types::*;
 
+extern crate num;
+
 use std::ptr;
 use std::mem;
 use std::os::raw::c_void;
 use std::path::Path;
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 
 use image;
 use image::GenericImage;
 use image::DynamicImage::*;
 
-use common::process_events;
+use common::{process_events, processInput, loadTexture};
 use shader::Shader;
 use camera::Camera;
 use camera::Camera_Movement::*;
 
-use cgmath::{Matrix4, vec3, Vector3, Deg, perspective, Point3};
+use cgmath::{Matrix4, vec3, Vector3, vec2, Deg, perspective, Point3};
 use cgmath::prelude::*;
 
 // settings
@@ -72,7 +74,7 @@ pub fn main_6_1_1() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let (shader, planeVBO, planeVAO, floorTexture, floorTextureGammaCorrected) = unsafe {
+    let shader = unsafe {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
@@ -82,67 +84,41 @@ pub fn main_6_1_1() {
         // build and compile shaders
         // ------------------------------------
         let shader = Shader::new(
-            "src/_5_advanced_lighting/shaders/2.gamma_correction.vs",
-            "src/_5_advanced_lighting/shaders/2.gamma_correction.fs");
+            "src/_6_pbr/shaders/1.1.pbr.vs",
+            "src/_6_pbr/shaders/1.1.pbr.fs");
 
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        // ------------------------------------------------------------------
-        let planeVertices: [f32; 48] = [
-            // positions         // normals      // texcoords
-             10.0, -0.5,  10.0,  0.0, 1.0, 0.0,  10.0,  0.0,
-            -10.0, -0.5,  10.0,  0.0, 1.0, 0.0,   0.0,  0.0,
-            -10.0, -0.5, -10.0,  0.0, 1.0, 0.0,   0.0, 10.0,
-
-             10.0, -0.5,  10.0,  0.0, 1.0, 0.0,  10.0,  0.0,
-            -10.0, -0.5, -10.0,  0.0, 1.0, 0.0,   0.0, 10.0,
-             10.0, -0.5, -10.0,  0.0, 1.0, 0.0,  10.0, 10.0
-        ];
-        // plane VAO
-        let (mut planeVAO, mut planeVBO) = (0, 0);
-        gl::GenVertexArrays(1, &mut planeVAO);
-        gl::GenBuffers(1, &mut planeVBO);
-        gl::BindVertexArray(planeVAO);
-        gl::BindBuffer(gl::ARRAY_BUFFER, planeVBO);
-        gl::BufferData(gl::ARRAY_BUFFER,
-                       (planeVertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                       &planeVertices[0] as *const f32 as *const c_void,
-                       gl::STATIC_DRAW);
-        gl::EnableVertexAttribArray(0);
-        let stride = 8 * mem::size_of::<GLfloat>() as GLsizei;
-        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
-        gl::EnableVertexAttribArray(1);
-        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::EnableVertexAttribArray(2);
-        gl::VertexAttribPointer(2, 2, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
-        gl::BindVertexArray(0);
-
-        // load textures
-        // -------------
-        let floorTexture = loadTexture("resources/textures/wood.png", false);
-        let floorTextureGammaCorrected = loadTexture("resources/textures/wood.png", true);
-
-        // shader configuration
-        // --------------------
         shader.useProgram();
-        shader.setInt(c_str!("floorTexture"), 0);
+        shader.setVec3(c_str!("albedo"), 0.5, 0.0, 0.0);
+        shader.setFloat(c_str!("ao"), 1.0);
 
-        (shader, planeVBO, planeVAO, floorTexture, floorTextureGammaCorrected)
+        // lights
+        // -------------
+
+        // initialize static shader uniforms before rendering
+        // --------------------------------------------------
+        // TODO!!!
+        let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
+        shader.setMat4(c_str!("projection"), &projection);
+
+        shader
     };
 
-    // lighting info
-    // -------------
     let lightPositions: [Vector3<f32>; 4] = [
-        vec3(-3.0, 0.0, 0.0),
-        vec3(-1.0, 0.0, 0.0),
-        vec3 (1.0, 0.0, 0.0),
-        vec3 (3.0, 0.0, 0.0)
+        vec3(-10.0,  10.0, 10.0),
+        vec3( 10.0,  10.0, 10.0),
+        vec3(-10.0, -10.0, 10.0),
+        vec3( 10.0, -10.0, 10.0)
     ];
     let lightColors: [Vector3<f32>; 4] = [
-        vec3(0.25, 0.25, 0.25),
-        vec3(0.50, 0.50, 0.50),
-        vec3(0.75, 0.75, 0.75),
-        vec3(1.00, 1.00, 1.00)
+        vec3(300.0, 300.0, 300.0),
+        vec3(300.0, 300.0, 300.0),
+        vec3(300.0, 300.0, 300.0),
+        vec3(300.0, 300.0, 300.0)
     ];
+    let nrRows    = 7;
+    let nrColumns = 7;
+    let spacing = 2.5;
+
 
     // render loop
     // -----------
@@ -159,7 +135,7 @@ pub fn main_6_1_1() {
 
         // input
         // -----
-        processInput(&mut window, deltaTime, &mut camera, &mut gammaEnabled, &mut gammaKeyPressed);
+        processInput(&mut window, deltaTime, &mut camera);
 
         // render
         // ------
@@ -169,26 +145,45 @@ pub fn main_6_1_1() {
 
             // draw objects
             shader.useProgram();
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
             let view = camera.GetViewMatrix();
-            shader.setMat4(c_str!("projection"), &projection);
             shader.setMat4(c_str!("view"), &view);
-            // set light uniforms
-            shader.setVector3(c_str!("lightPositions[0]"), &lightPositions[0]);
-            shader.setVector3(c_str!("lightPositions[1]"), &lightPositions[1]);
-            shader.setVector3(c_str!("lightPositions[2]"), &lightPositions[2]);
-            shader.setVector3(c_str!("lightPositions[3]"), &lightPositions[3]);
-            shader.setVector3(c_str!("lightColors[0]"), &lightColors[0]);
-            shader.setVector3(c_str!("lightColors[1]"), &lightColors[1]);
-            shader.setVector3(c_str!("lightColors[2]"), &lightColors[2]);
-            shader.setVector3(c_str!("lightColors[3]"), &lightColors[3]);
-            shader.setVector3(c_str!("viewPos"), &camera.Position.to_vec());
-            shader.setBool(c_str!("gamma"), gammaEnabled);
-            // floor
-            gl::BindVertexArray(planeVAO);
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, if gammaEnabled { floorTextureGammaCorrected } else { floorTexture });
-            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            shader.setVector3(c_str!("camPos"), &camera.Position.to_vec());
+
+            // render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
+            let mut model: Matrix4<f32>;
+            for row in 0..nrRows {
+                shader.setFloat(c_str!("metallic"), row as i32 as f32 / nrRows as f32);
+                for col in 0..nrColumns {
+                    // we clamp the roughness to 0.025 - 1.0 as perfectly smooth surfaces (roughness of 0.0) tend to look a bit off
+                    // on direct lighting.
+                    shader.setFloat(c_str!("roughness"), num::clamp(col as i32 as f32 / nrColumns as f32, 0.05, 1.0));
+
+                    let model = Matrix4::from_translation(vec3(
+                        (col as f32 - (nrColumns / 2) as f32 * spacing) as f32,
+                        (row as f32 - (nrRows / 2) as f32 * spacing) as f32,
+                        0.0
+                    ));
+                    shader.setMat4(c_str!("model"), &model);
+                    renderSphere();
+                }
+            }
+
+            // render light source (simply re-render sphere at light positions)
+            // this looks a bit off as we use the same shader, but it'll make their positions obvious and
+            // keeps the codeprint small.
+            for (i, lightPosition) in lightPositions.iter().enumerate() {
+                let mut newPos = lightPosition + vec3((glfw.get_time() as f32 * 5.0).sin() * 5.0, 0.0, 0.0);
+                newPos = *lightPosition;
+                let mut name = CString::new(format!("lightPositions[{}]", i)).unwrap();
+                shader.setVector3(&name, &newPos);
+                name = CString::new(format!("lightColors[{}]", i)).unwrap();
+                shader.setVector3(&name, &lightColors[i]);
+
+                model = Matrix4::from_translation(newPos);
+                model = model * Matrix4::from_scale(0.5);
+                shader.setMat4(c_str!("model"), &model);
+                renderSphere();
+            }
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -197,68 +192,57 @@ pub fn main_6_1_1() {
         glfw.poll_events();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    unsafe {
-        gl::DeleteVertexArrays(1, &planeVAO);
-        gl::DeleteBuffers(1, &planeVBO);
-    }
 }
 
-// NOTE: not the same version as in common.rs
-pub fn processInput(window: &mut glfw::Window, deltaTime: f32, camera: &mut Camera, gammaEnabled: &mut bool, gammaKeyPressed: &mut bool) {
-    if window.get_key(Key::Escape) == Action::Press {
-        window.set_should_close(true)
+pub fn renderSphere(sphereVAO: &mut u32, indexCount: u32) {
+    if *sphereVAO == 0 {
+        gl::GenVertexArrays(1, sphereVAO);
+
+        let mut vbo = 0;
+        let mut ebo = 0;
+        gl::GenBuffers(1, &mut vbo);
+        gl::GenBuffers(1, &mut ebo);
+
+        let positions = vec![];
+        let uv = vec![];
+        let normals = vec![];
+        let indices = vec![];
+
+        const X_SEGMENTS: u32 = 64;
+        const Y_SEGMENTS: u32 = 64;
+        const PI: f32 = 3.14159265359;
+        for y in 0..Y_SEGMENTS {
+            for x in 0..X_SEGMENTS {
+                let xSegment = x as f32 / X_SEGMENTS as f32;
+                let ySegment = y as f32 / Y_SEGMENTS as f32;
+                let xPos = (xSegment * 2.0 * PI).cos() * (ySegment * PI).sin();
+                let yPos = (ySegment * PI).cos();
+                let zPos = (xSegment * 2.0 * PI).sin() * (ySegment * PI).sin();
+
+                positions.push(vec3(xPos, yPos, zPos));
+                uv.push(vec2(xSegment, ySegment));
+                normals.push(vec3(xPos, yPos, zPos));
+            }
+        }
+
+        let mut oddRow = false;
+        for y in 0..Y_SEGMENTS {
+            if oddRow { // even rows: y == 0, y == 2; and so on
+                for x in 0..X_SEGMENTS {
+                    indices.push(y       * (X_SEGMENTS + 1) + x);
+                    indices.push((y + 1) * (X_SEGMENTS + 1) + x);
+                }
+            }
+            else {
+                for x in 0..X_SEGMENTS {
+                    indices.push((y + 1) * (X_SEGMENTS + 1) + x);
+                    indices.push(y       * (X_SEGMENTS + 1) + x);
+                }
+            }
+            oddRow = !oddRow;
+        }
+        indexCount = indices.len() as u32;
+
+        // TODO!!!
     }
-
-    if window.get_key(Key::W) == Action::Press {
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    }
-    if window.get_key(Key::S) == Action::Press {
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    }
-    if window.get_key(Key::A) == Action::Press {
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    }
-    if window.get_key(Key::D) == Action::Press {
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-    }
-
-    if window.get_key(Key::Space) == Action::Press && !(*gammaKeyPressed) {
-        *gammaEnabled = !(*gammaEnabled);
-        *gammaKeyPressed = true;
-        println!("{}", if *gammaEnabled { "Gamma Enabled" } else { "Gamma disabled" })
-    }
-    if window.get_key(Key::Space) == Action::Release {
-        *gammaKeyPressed = false;
-    }
-}
-
-// NOTE: not the same version as in common.rs
-pub unsafe fn loadTexture(path: &str, gammaCorrection: bool) -> u32 {
-    let mut textureID = 0;
-
-    gl::GenTextures(1, &mut textureID);
-    let img = image::open(&Path::new(path)).expect("Texture failed to load");
-    // need two different formats for gamma correction
-    let (internalFormat, dataFormat) = match img {
-        ImageLuma8(_) => (gl::RED, gl::RED),
-        ImageLumaA8(_) => (gl::RG, gl::RG),
-        ImageRgb8(_) => (if gammaCorrection { gl::SRGB } else { gl::RGB }, gl::RGB),
-        ImageRgba8(_) => (if gammaCorrection { gl::SRGB_ALPHA } else { gl::RGB }, gl::RGBA),
-    };
-
-    let data = img.raw_pixels();
-
-    gl::BindTexture(gl::TEXTURE_2D, textureID);
-    gl::TexImage2D(gl::TEXTURE_2D, 0, internalFormat as i32, img.width() as i32, img.height() as i32,
-        0, dataFormat, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
-    gl::GenerateMipmap(gl::TEXTURE_2D);
-
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_LINEAR as i32);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-
-    textureID
 }
