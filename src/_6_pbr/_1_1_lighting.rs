@@ -2,27 +2,20 @@
 #![allow(non_snake_case)]
 
 extern crate glfw;
-use self::glfw::{Context, Key, Action};
+use self::glfw::Context;
 
 extern crate gl;
-use self::gl::types::*;
 
 extern crate num;
 
 use std::ptr;
-use std::mem;
+use std::mem::size_of;
 use std::os::raw::c_void;
-use std::path::Path;
 use std::ffi::{CStr, CString};
 
-use image;
-use image::GenericImage;
-use image::DynamicImage::*;
-
-use common::{process_events, processInput, loadTexture};
+use common::{process_events, processInput};
 use shader::Shader;
 use camera::Camera;
-use camera::Camera_Movement::*;
 
 use cgmath::{Matrix4, vec3, Vector3, vec2, Deg, perspective, Point3};
 use cgmath::prelude::*;
@@ -31,11 +24,7 @@ use cgmath::prelude::*;
 const SCR_WIDTH: u32 = 1280;
 const SCR_HEIGHT: u32 = 720;
 
-// TODO!!: copied from 5.2
 pub fn main_6_1_1() {
-    let mut gammaEnabled = false;
-    let mut gammaKeyPressed = false;
-
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -96,7 +85,6 @@ pub fn main_6_1_1() {
 
         // initialize static shader uniforms before rendering
         // --------------------------------------------------
-        // TODO!!!
         let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
         shader.setMat4(c_str!("projection"), &projection);
 
@@ -119,6 +107,8 @@ pub fn main_6_1_1() {
     let nrColumns = 7;
     let spacing = 2.5;
 
+    let mut sphereVAO = 0;
+    let mut indexCount = 0;
 
     // render loop
     // -----------
@@ -143,7 +133,6 @@ pub fn main_6_1_1() {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // draw objects
             shader.useProgram();
             let view = camera.GetViewMatrix();
             shader.setMat4(c_str!("view"), &view);
@@ -159,12 +148,12 @@ pub fn main_6_1_1() {
                     shader.setFloat(c_str!("roughness"), num::clamp(col as i32 as f32 / nrColumns as f32, 0.05, 1.0));
 
                     let model = Matrix4::from_translation(vec3(
-                        (col as f32 - (nrColumns / 2) as f32 * spacing) as f32,
-                        (row as f32 - (nrRows / 2) as f32 * spacing) as f32,
+                        ((col - (nrColumns / 2)) as f32 * spacing),
+                        ((row - (nrRows / 2)) as f32 * spacing),
                         0.0
                     ));
                     shader.setMat4(c_str!("model"), &model);
-                    renderSphere();
+                    renderSphere(&mut sphereVAO, &mut indexCount);
                 }
             }
 
@@ -172,8 +161,9 @@ pub fn main_6_1_1() {
             // this looks a bit off as we use the same shader, but it'll make their positions obvious and
             // keeps the codeprint small.
             for (i, lightPosition) in lightPositions.iter().enumerate() {
-                let mut newPos = lightPosition + vec3((glfw.get_time() as f32 * 5.0).sin() * 5.0, 0.0, 0.0);
-                newPos = *lightPosition;
+                // NOTE: toggle comments on next two lines to animate the lights
+                // let newPos = lightPosition + vec3((glfw.get_time() as f32 * 5.0).sin() * 5.0, 0.0, 0.0);
+                let newPos = *lightPosition;
                 let mut name = CString::new(format!("lightPositions[{}]", i)).unwrap();
                 shader.setVector3(&name, &newPos);
                 name = CString::new(format!("lightColors[{}]", i)).unwrap();
@@ -182,7 +172,7 @@ pub fn main_6_1_1() {
                 model = Matrix4::from_translation(newPos);
                 model = model * Matrix4::from_scale(0.5);
                 shader.setMat4(c_str!("model"), &model);
-                renderSphere();
+                renderSphere(&mut sphereVAO, &mut indexCount);
             }
         }
 
@@ -194,7 +184,7 @@ pub fn main_6_1_1() {
 
 }
 
-pub fn renderSphere(sphereVAO: &mut u32, indexCount: u32) {
+pub unsafe fn renderSphere(sphereVAO: &mut u32, indexCount: &mut u32) {
     if *sphereVAO == 0 {
         gl::GenVertexArrays(1, sphereVAO);
 
@@ -203,16 +193,16 @@ pub fn renderSphere(sphereVAO: &mut u32, indexCount: u32) {
         gl::GenBuffers(1, &mut vbo);
         gl::GenBuffers(1, &mut ebo);
 
-        let positions = vec![];
-        let uv = vec![];
-        let normals = vec![];
-        let indices = vec![];
+        let mut positions = vec![];
+        let mut uv = vec![];
+        let mut normals = vec![];
+        let mut indices = vec![];
 
         const X_SEGMENTS: u32 = 64;
         const Y_SEGMENTS: u32 = 64;
         const PI: f32 = 3.14159265359;
-        for y in 0..Y_SEGMENTS {
-            for x in 0..X_SEGMENTS {
+        for y in 0..Y_SEGMENTS+1 {
+            for x in 0..X_SEGMENTS+1 {
                 let xSegment = x as f32 / X_SEGMENTS as f32;
                 let ySegment = y as f32 / Y_SEGMENTS as f32;
                 let xPos = (xSegment * 2.0 * PI).cos() * (ySegment * PI).sin();
@@ -228,21 +218,55 @@ pub fn renderSphere(sphereVAO: &mut u32, indexCount: u32) {
         let mut oddRow = false;
         for y in 0..Y_SEGMENTS {
             if oddRow { // even rows: y == 0, y == 2; and so on
-                for x in 0..X_SEGMENTS {
+                for x in 0..X_SEGMENTS+1 {
                     indices.push(y       * (X_SEGMENTS + 1) + x);
                     indices.push((y + 1) * (X_SEGMENTS + 1) + x);
                 }
             }
             else {
-                for x in 0..X_SEGMENTS {
+                for x in (0..X_SEGMENTS+1).rev() {
                     indices.push((y + 1) * (X_SEGMENTS + 1) + x);
                     indices.push(y       * (X_SEGMENTS + 1) + x);
                 }
             }
             oddRow = !oddRow;
         }
-        indexCount = indices.len() as u32;
+        *indexCount = indices.len() as u32;
 
-        // TODO!!!
+        let mut data: Vec<f32> = Vec::new();
+        for (i, position) in positions.iter().enumerate() {
+            data.push(position.x);
+            data.push(position.y);
+            data.push(position.z);
+            if uv.len() > 0 {
+                data.push(uv[i].x);
+                data.push(uv[i].y);
+            }
+            if normals.len() > 0 {
+                data.push(normals[i].x);
+                data.push(normals[i].y);
+                data.push(normals[i].z);
+            }
+        }
+        gl::BindVertexArray(*sphereVAO);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (data.len() * size_of::<f32>()) as isize,
+            &data[0] as *const f32 as *const c_void,
+            gl::STATIC_DRAW
+        );
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+        gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, (indices.len() * size_of::<u32>()) as isize, &indices[0] as *const u32 as *const c_void, gl::STATIC_DRAW);
+        let stride = (3 + 2 + 3) * size_of::<f32>() as i32;
+        gl::EnableVertexAttribArray(0);
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        gl::EnableVertexAttribArray(1);
+        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * size_of::<f32>()) as *const c_void);
+        gl::EnableVertexAttribArray(2);
+        gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, stride, (5 * size_of::<f32>()) as *const c_void);
     }
+
+    gl::BindVertexArray(*sphereVAO);
+    gl::DrawElements(gl::TRIANGLE_STRIP, *indexCount as i32, gl::UNSIGNED_INT, ptr::null());
 }
