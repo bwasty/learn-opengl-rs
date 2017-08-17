@@ -36,6 +36,10 @@ mod _5_advanced_lighting;
 #[cfg(feature = "chapter-5")]
 use _5_advanced_lighting::*;
 
+#[cfg(feature = "chapter-6")]
+mod _6_pbr;
+#[cfg(feature = "chapter-6")]
+use _6_pbr::*;
 
 #[cfg(feature = "chapter-7")]
 mod _7_in_practice;
@@ -107,6 +111,9 @@ fn main() {
         #[cfg(feature = "chapter-5")] "5_2" => main_5_2(),
         #[cfg(feature = "chapter-5")] "5_4" => main_5_4(),
         #[cfg(feature = "chapter-5")] "5_6" => main_5_6(),
+
+        #[cfg(feature = "chapter-6")] "6_1_1" => main_6_1_1(),
+        #[cfg(feature = "chapter-6")] "6_1_2" => main_6_1_2(),
 
         #[cfg(feature = "chapter-7")] "7_1" => main_7_1(),
 
