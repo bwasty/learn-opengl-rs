@@ -42,6 +42,7 @@ pub fn main_6_1_1() {
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
+    glfw.window_hint(glfw::WindowHint::Samples(Some(4)));
     glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
     #[cfg(target_os = "macos")]
     glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
@@ -67,8 +68,6 @@ pub fn main_6_1_1() {
         // configure global opengl state
         // -----------------------------
         gl::Enable(gl::DEPTH_TEST);
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
         // build and compile shaders
         // ------------------------------------
@@ -80,9 +79,6 @@ pub fn main_6_1_1() {
         shader.setVec3(c_str!("albedo"), 0.5, 0.0, 0.0);
         shader.setFloat(c_str!("ao"), 1.0);
 
-        // lights
-        // -------------
-
         // initialize static shader uniforms before rendering
         // --------------------------------------------------
         let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), SCR_WIDTH as f32 / SCR_HEIGHT as f32 , 0.1, 100.0);
@@ -91,6 +87,8 @@ pub fn main_6_1_1() {
         shader
     };
 
+    // lights
+    // ------
     let lightPositions: [Vector3<f32>; 4] = [
         vec3(-10.0,  10.0, 10.0),
         vec3( 10.0,  10.0, 10.0),
