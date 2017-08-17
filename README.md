@@ -34,8 +34,8 @@ For reduced compilation times, you may only compile the code for a certain chapt
 ### [4. Advanced OpenGL](src/_4_advanced_opengl)
 ### [5. Advanced Lighting](src/_5_advanced_lighting)
 **Status:** partially done; the rest will come after PBR.
-### 6. PBR
-**Status:** TODO
+### [6. PBR](src/_6_pbr)
+**Status:** WIP, done: `Lighting`
 ### [7. In Practice](src/_7_in_practice)
 **Status:** `Debugging` complete (the other two are not in the repo)
 
