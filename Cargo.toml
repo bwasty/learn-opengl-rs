@@ -6,7 +6,7 @@ version = "0.6.1"
 [dependencies]
 cgmath = "0.14.1"
 gl = "0.6.2"
-glfw = "0.15.0"
+glfw = "0.21.0"
 image = "0.14.0"
 # only needed from chapter 3 on
 tobj = "0.1.6"
