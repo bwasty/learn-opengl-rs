@@ -97,7 +97,7 @@ pub fn main_4_10_3() {
             let y = displacement * 0.4; // keep height of asteroid field smaller compared to width of x and z
             displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as u32) as f32 / 100.0 - offset;
             let z = angle.cos() * radius + displacement;
-            let mut model = Matrix4::<u32>::from_translation(vec3(x, y, z));
+            let mut model = Matrix4::<f32>::from_translation(vec3(x, y, z));
 
             // 2. scale: Scale between 0.05 and 0.25
             let scale = (rng.gen::<u32>() % 20) as f32 / 100.0 + 0.05;
