@@ -91,20 +91,20 @@ pub fn main_4_10_3() {
         let offset: f32 = 25.0;
         for i in 0..amount {
             let angle = i as i32 as f32 / amount as f32 * 360.0;
-            let mut displacement = (rng.gen::<i32>() % (2.0 * offset * 100.0) as i32) as f32 / 100.0 - offset;
+            let mut displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as u32) as f32 / 100.0 - offset;
             let x = angle.sin() * radius + displacement;
-            displacement = (rng.gen::<i32>() % (2.0 * offset * 100.0) as i32) as f32 / 100.0 - offset;
+            displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as i32) as u32 / 100.0 - offset;
             let y = displacement * 0.4; // keep height of asteroid field smaller compared to width of x and z
-            displacement = (rng.gen::<i32>() % (2.0 * offset * 100.0) as i32) as f32 / 100.0 - offset;
+            displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as i32) as u32 / 100.0 - offset;
             let z = angle.cos() * radius + displacement;
-            let mut model = Matrix4::<f32>::from_translation(vec3(x, y, z));
+            let mut model = Matrix4::<u32>::from_translation(vec3(x, y, z));
 
             // 2. scale: Scale between 0.05 and 0.25
-            let scale = (rng.gen::<i32>() % 20) as f32 / 100.0 + 0.05;
+            let scale = (rng.gen::<u32>() % 20) as f32 / 100.0 + 0.05;
             model = model * Matrix4::from_scale(scale);
 
             // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
-            let rotAngle = (rng.gen::<i32>() % 360) as f32;
+            let rotAngle = (rng.gen::<u32>() % 360) as f32;
             model = model * Matrix4::from_axis_angle(vec3(0.4, 0.6, 0.8).normalize(), Deg(rotAngle));
 
             // 4. now add to list of matrices
