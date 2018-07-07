@@ -93,9 +93,9 @@ pub fn main_4_10_3() {
             let angle = i as i32 as f32 / amount as f32 * 360.0;
             let mut displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as u32) as f32 / 100.0 - offset;
             let x = angle.sin() * radius + displacement;
-            displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as i32) as u32 / 100.0 - offset;
+            displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as u32) as f32 / 100.0 - offset;
             let y = displacement * 0.4; // keep height of asteroid field smaller compared to width of x and z
-            displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as i32) as u32 / 100.0 - offset;
+            displacement = (rng.gen::<u32>() % (2.0 * offset * 100.0) as u32) as f32 / 100.0 - offset;
             let z = angle.cos() * radius + displacement;
             let mut model = Matrix4::<u32>::from_translation(vec3(x, y, z));
 
