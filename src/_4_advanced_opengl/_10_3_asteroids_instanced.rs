@@ -84,7 +84,7 @@ pub fn main_4_10_3() {
 
         // generate a large list of semi-random model transformation matrices
         // ------------------------------------------------------------------
-        let amount = 100000;
+        let amount = 100_000;
         let mut modelMatrices: Vec<Matrix4<f32>> = Vec::with_capacity(amount);
         let mut rng = rand::thread_rng();
         let radius = 150.0;

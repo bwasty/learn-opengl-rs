@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "cargo-clippy", allow(cast_lossless))]
+
 extern crate gl;
 extern crate image;
 extern crate cgmath;

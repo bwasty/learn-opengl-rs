@@ -22,8 +22,10 @@ impl Shader {
     pub fn new(vertexPath: &str, fragmentPath: &str) -> Shader {
         let mut shader = Shader { ID: 0 };
         // 1. retrieve the vertex/fragment source code from filesystem
-        let mut vShaderFile = File::open(vertexPath).expect(&format!("Failed to open {}", vertexPath));
-        let mut fShaderFile = File::open(fragmentPath).expect(&format!("Failed to open {}", fragmentPath));
+        let mut vShaderFile = File::open(vertexPath)
+            .unwrap_or_else(|_| panic!("Failed to open {}", vertexPath));
+        let mut fShaderFile = File::open(fragmentPath)
+            .unwrap_or_else(|_| panic!("Failed to open {}", fragmentPath));
         let mut vertexCode = String::new();
         let mut fragmentCode = String::new();
         vShaderFile
@@ -128,9 +130,12 @@ impl Shader {
     pub fn with_geometry_shader(vertexPath: &str, fragmentPath: &str, geometryPath: &str) -> Self {
         let mut shader = Shader { ID: 0 };
         // 1. retrieve the vertex/fragment source code from filesystem
-        let mut vShaderFile = File::open(vertexPath).expect(&format!("Failed to open {}", vertexPath));
-        let mut fShaderFile = File::open(fragmentPath).expect(&format!("Failed to open {}", fragmentPath));
-        let mut gShaderFile = File::open(geometryPath).expect(&format!("Failed to open {}", geometryPath));
+        let mut vShaderFile = File::open(vertexPath)
+            .unwrap_or_else(|_| panic!("Failed to open {}", vertexPath));
+        let mut fShaderFile = File::open(fragmentPath)
+            .unwrap_or_else(|_| panic!("Failed to open {}", fragmentPath));
+        let mut gShaderFile = File::open(geometryPath)
+            .unwrap_or_else(|_| panic!("Failed to open {}", geometryPath));
         let mut vertexCode = String::new();
         let mut fragmentCode = String::new();
         let mut geometryCode = String::new();

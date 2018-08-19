@@ -12,6 +12,7 @@ use std::ptr;
 use std::mem::size_of;
 use std::os::raw::c_void;
 use std::ffi::{CStr, CString};
+use std::f32::consts::PI;
 
 use common::{process_events, processInput, loadTexture};
 use shader::Shader;
@@ -164,8 +165,8 @@ pub fn main_6_1_2() {
                     shader.setFloat(c_str!("roughness"), num::clamp(col as i32 as f32 / nrColumns as f32, 0.05, 1.0));
 
                     let model = Matrix4::from_translation(vec3(
-                        ((col - (nrColumns / 2)) as f32 * spacing),
-                        ((row - (nrRows / 2)) as f32 * spacing),
+                        (col - (nrColumns / 2)) as f32 * spacing,
+                        (row - (nrRows / 2)) as f32 * spacing,
                         0.0
                     ));
                     shader.setMat4(c_str!("model"), &model);
@@ -216,7 +217,6 @@ pub unsafe fn renderSphere(sphereVAO: &mut u32, indexCount: &mut u32) {
 
         const X_SEGMENTS: u32 = 64;
         const Y_SEGMENTS: u32 = 64;
-        const PI: f32 = 3.14159265359;
         for y in 0..Y_SEGMENTS+1 {
             for x in 0..X_SEGMENTS+1 {
                 let xSegment = x as f32 / X_SEGMENTS as f32;
@@ -254,11 +254,11 @@ pub unsafe fn renderSphere(sphereVAO: &mut u32, indexCount: &mut u32) {
             data.push(position.x);
             data.push(position.y);
             data.push(position.z);
-            if uv.len() > 0 {
+            if !uv.is_empty() {
                 data.push(uv[i].x);
                 data.push(uv[i].y);
             }
-            if normals.len() > 0 {
+            if !normals.is_empty() {
                 data.push(normals[i].x);
                 data.push(normals[i].y);
                 data.push(normals[i].z);

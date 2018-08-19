@@ -11,7 +11,7 @@ type Vector3 = cgmath::Vector3<f32>;
 type Matrix4 = cgmath::Matrix4<f32>;
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum Camera_Movement {
     FORWARD,
     BACKWARD,

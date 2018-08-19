@@ -60,7 +60,7 @@ extern "system" fn glDebugOutput(source: gl::types::GLenum,
                                  message: *const gl::types::GLchar,
                                  _userParam: *mut c_void)
 {
-    if id == 131169 || id == 131185 || id == 131218 || id == 131204 {
+    if id == 131_169 || id == 131_185 || id == 131_218 || id == 131_204 {
         // ignore these non-significant error codes
         return
     }
