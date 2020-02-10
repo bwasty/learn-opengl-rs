@@ -168,7 +168,7 @@ unsafe fn renderQuad(quadVAO: &mut u32, quadVBO: &mut u32) {
         // calculate tangent/bitangent vectors of both triangles
         let mut tangent1: Vector3<f32> = vec3(0.0, 0.0, 0.0);
         let mut bitangent1: Vector3<f32> = vec3(0.0, 0.0, 0.0);
-        let mut tangent2: Vector3<f32> = vec3(0.0, 0.0, 0.0);;
+        let mut tangent2: Vector3<f32> = vec3(0.0, 0.0, 0.0);
         let mut bitangent2: Vector3<f32> = vec3(0.0, 0.0, 0.0);
         // triangle 1
         // ----------
