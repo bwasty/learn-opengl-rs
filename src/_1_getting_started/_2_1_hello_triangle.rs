@@ -67,10 +67,11 @@ pub fn main_1_2_1() {
         // check for shader compile errors
         let mut success = gl::FALSE as GLint;
         let mut infoLog = Vec::with_capacity(512);
-        infoLog.set_len(512 - 1); // subtract 1 to skip the trailing null character
+        let infoLogLenPtr = &mut 0 as *mut GLsizei;
         gl::GetShaderiv(vertexShader, gl::COMPILE_STATUS, &mut success);
         if success != gl::TRUE as GLint {
-            gl::GetShaderInfoLog(vertexShader, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
+            gl::GetShaderInfoLog(vertexShader, 512, infoLogLenPtr, infoLog.as_mut_ptr() as *mut GLchar);
+            infoLog.set_len(*infoLogLenPtr as usize);
             println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
         }
 
@@ -82,7 +83,8 @@ pub fn main_1_2_1() {
         // check for shader compile errors
         gl::GetShaderiv(fragmentShader, gl::COMPILE_STATUS, &mut success);
         if success != gl::TRUE as GLint {
-            gl::GetShaderInfoLog(fragmentShader, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
+            gl::GetShaderInfoLog(fragmentShader, 512, infoLogLenPtr, infoLog.as_mut_ptr() as *mut GLchar);
+            infoLog.set_len(*infoLogLenPtr as usize);
             println!("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
         }
 
@@ -94,7 +96,8 @@ pub fn main_1_2_1() {
         // check for linking errors
         gl::GetProgramiv(shaderProgram, gl::LINK_STATUS, &mut success);
         if success != gl::TRUE as GLint {
-            gl::GetProgramInfoLog(shaderProgram, 512, ptr::null_mut(), infoLog.as_mut_ptr() as *mut GLchar);
+            gl::GetProgramInfoLog(shaderProgram, 512, infoLogLenPtr, infoLog.as_mut_ptr() as *mut GLchar);
+            infoLog.set_len(*infoLogLenPtr as usize);
             println!("ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n{}", str::from_utf8(&infoLog).unwrap());
         }
         gl::DeleteShader(vertexShader);
