@@ -116,6 +116,7 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
     gl::GenTextures(1, &mut textureID);
 
     let img = image::open(&Path::new(&filename)).expect("Texture failed to load");
+    let img = img.flipv();
     let format = match img {
         ImageLuma8(_) => gl::RED,
         ImageLumaA8(_) => gl::RG,
