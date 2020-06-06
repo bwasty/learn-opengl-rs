@@ -8,3 +8,6 @@ pub use self::_4_normal_mapping::*;
 
 mod _6_hdr;
 pub use self::_6_hdr::*;
+
+mod _9_ssao;
+pub use self::_9_ssao::*;
