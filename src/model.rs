@@ -8,7 +8,7 @@ use cgmath::{vec2, vec3};
 use gl;
 use image;
 use image::DynamicImage::*;
-use image::GenericImage;
+use image::GenericImageView;
 use tobj;
 
 use mesh::{ Mesh, Texture, Vertex };
@@ -42,7 +42,7 @@ impl Model {
 
         // retrieve the directory path of the filepath
         self.directory = path.parent().unwrap_or_else(|| Path::new("")).to_str().unwrap().into();
-        let obj = tobj::load_obj(path);
+        let obj = tobj::load_obj(path,true);
 
         let (models, materials) = obj.unwrap();
         for model in models {
@@ -122,12 +122,14 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
         ImageLumaA8(_) => gl::RG,
         ImageRgb8(_) => gl::RGB,
         ImageRgba8(_) => gl::RGBA,
+        _ => panic!(),
     };
 
     let data = img.raw_pixels();
+    let dim = img.dimensions();
 
     gl::BindTexture(gl::TEXTURE_2D, textureID);
-    gl::TexImage2D(gl::TEXTURE_2D, 0, format as i32, img.width() as i32, img.height() as i32,
+    gl::TexImage2D(gl::TEXTURE_2D, 0, format as i32, dim.0 as i32, dim.1 as i32,
         0, format, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
     gl::GenerateMipmap(gl::TEXTURE_2D);
 

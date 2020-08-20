@@ -14,7 +14,7 @@ use std::path::Path;
 use shader::Shader;
 
 extern crate image;
-use image::GenericImage;
+use image::GenericImageView;
 
 // settings
 const SCR_WIDTH: u32 = 800;
@@ -108,11 +108,13 @@ pub fn main_1_4_1() {
         // load image, create texture and generate mipmaps
         let img = image::open(&Path::new("resources/textures/container.jpg")).expect("Failed to load texture");
         let data = img.raw_pixels();
+        let dim = img.dimensions();
+
         gl::TexImage2D(gl::TEXTURE_2D,
                        0,
                        gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
+                       dim.0 as i32, 
+                       dim.1 as i32,
                        0,
                        gl::RGB,
                        gl::UNSIGNED_BYTE,

@@ -160,3 +160,13 @@ impl Mesh {
         gl::BindVertexArray(0);
     }
 }
+
+impl Drop for Mesh {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteVertexArrays(1, &self.VAO);
+            gl::DeleteBuffers(1, &self.VBO);
+            gl::DeleteBuffers(1, &self.EBO);
+        }
+    }
+}

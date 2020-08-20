@@ -11,7 +11,7 @@ extern crate glfw;
 use self::glfw::{Key, Action};
 
 use image;
-use image::GenericImage;
+use image::GenericImageView;
 use image::DynamicImage::*;
 
 use camera::Camera;
@@ -89,12 +89,14 @@ pub unsafe fn loadTexture(path: &str) -> u32 {
         ImageLumaA8(_) => gl::RG,
         ImageRgb8(_) => gl::RGB,
         ImageRgba8(_) => gl::RGBA,
+        _ => panic!()
     };
 
     let data = img.raw_pixels();
+    let dim = img.dimensions();
 
     gl::BindTexture(gl::TEXTURE_2D, textureID);
-    gl::TexImage2D(gl::TEXTURE_2D, 0, format as i32, img.width() as i32, img.height() as i32,
+    gl::TexImage2D(gl::TEXTURE_2D, 0, format as i32, dim.0 as i32, dim.1 as i32,
         0, format, gl::UNSIGNED_BYTE, &data[0] as *const u8 as *const c_void);
     gl::GenerateMipmap(gl::TEXTURE_2D);
 

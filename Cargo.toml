@@ -1,17 +1,17 @@
 [package]
 authors = ["Benjamin Wasty <benny.wasty@gmail.com>"]
 name = "learn-opengl-rs"
-version = "0.6.1"
+version = "0.6.2"
 
 [dependencies]
-cgmath = "0.16.1"
-gl = "0.10.0"
-glfw = "0.23.0"
-image = "0.19.0"
+cgmath = "0.17.0"
+gl = "0.14.0"
+glfw = "0.39.1"
+image = "0.22.5"
 # only needed from chapter 3 on
-tobj = "0.1.6"
-num = "0.2.0"
-rand = "0.5.5"
+tobj = "2.0.2"
+num = "0.3.0"
+rand = "0.7.3"
 
 [features]
 default = [
