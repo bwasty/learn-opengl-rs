@@ -8,7 +8,7 @@ cgmath = "0.17.0"
 gl = "0.14.0"
 glfw = "0.39.1"
 image = "0.22.5"
-# only needed from chapter 3 ondasda
+# only needed from chapter 3 on
 tobj = "2.0.2"
 num = "0.3.0"
 rand = "0.7.3"
