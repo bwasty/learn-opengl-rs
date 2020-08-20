@@ -15,7 +15,7 @@ use std::ffi::CStr;
 use shader::Shader;
 
 use image;
-use image::GenericImage;
+use image::GenericImageView;
 
 // settings
 const SCR_WIDTH: u32 = 800;
@@ -111,11 +111,13 @@ pub fn main_1_4_2() {
         // load image, create texture and generate mipmaps
         let img = image::open(&Path::new("resources/textures/container.jpg")).expect("Failed to load texture");
         let data = img.raw_pixels();
+        let dim = img.dimensions();
+
         gl::TexImage2D(gl::TEXTURE_2D,
                        0,
                        gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
+                       dim.0 as i32,
+                       dim.1 as i32,
                        0,
                        gl::RGB,
                        gl::UNSIGNED_BYTE,
@@ -135,12 +137,14 @@ pub fn main_1_4_2() {
         let img = image::open(&Path::new("resources/textures/awesomeface.png")).expect("Failed to load texture");
         let img = img.flipv(); // flip loaded texture on the y-axis.
         let data = img.raw_pixels();
+        let dim = img.dimensions();
+        
         // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
         gl::TexImage2D(gl::TEXTURE_2D,
                        0,
                        gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
+                       dim.0 as i32,
+                       dim.1 as i32,
                        0,
                        gl::RGBA,
                        gl::UNSIGNED_BYTE,

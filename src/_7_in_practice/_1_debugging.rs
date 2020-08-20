@@ -16,7 +16,7 @@ use std::ffi::CStr;
 use shader::Shader;
 
 use image;
-use image::GenericImage;
+use image::GenericImageView;
 
 use cgmath::{Matrix4, vec3,  Deg, Rad, perspective};
 use cgmath::prelude::*;
@@ -134,7 +134,7 @@ pub fn main_7_1() {
         if flags as u32 & gl::CONTEXT_FLAG_DEBUG_BIT != 0 {
             gl::Enable(gl::DEBUG_OUTPUT);
             gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS); // makes sure errors are displayed synchronously
-            gl::DebugMessageCallback(glDebugOutput, ptr::null());
+            gl::DebugMessageCallback(Some(glDebugOutput), ptr::null());
             gl::DebugMessageControl(gl::DONT_CARE, gl::DONT_CARE, gl::DONT_CARE, 0, ptr::null(), gl::TRUE);
         }
         else {
@@ -221,11 +221,12 @@ pub fn main_7_1() {
         gl::BindTexture(gl::TEXTURE_2D, texture);
         let img = image::open(&Path::new("resources/textures/wood.png")).expect("Failed to load texture");
         let data = img.raw_pixels();
+        let dim = img.dimensions();
         gl::TexImage2D(gl::TEXTURE_2D,
                        0,
                        gl::RGB as i32,
-                       img.width() as i32,
-                       img.height() as i32,
+                       dim.0 as i32,
+                       dim.1 as i32,
                        0,
                        gl::RGB,
                        gl::UNSIGNED_BYTE,
