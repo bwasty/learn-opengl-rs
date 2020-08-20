@@ -89,7 +89,7 @@ pub unsafe fn loadTexture(path: &str) -> u32 {
         ImageLumaA8(_) => gl::RG,
         ImageRgb8(_) => gl::RGB,
         ImageRgba8(_) => gl::RGBA,
-        _ => panic!(),
+        _ => panic!()
     };
 
     let data = img.raw_pixels();
