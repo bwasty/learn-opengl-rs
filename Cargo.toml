@@ -12,6 +12,8 @@ image = "0.19.0"
 tobj = "0.1.6"
 num = "0.2.0"
 rand = "0.5.5"
+# only needed from chapter 7 text_rendering
+freetype-rs = "0.29.0"
 
 [features]
 default = [
